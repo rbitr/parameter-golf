@@ -9,3 +9,10 @@ data/docs_selected.jsonl
 .mypy_cache/
 .venv
 logs/
+final_model.*
+*.ptz
+agent_logs/*.json
+agent_logs/*.log
+!agent_logs/.gitkeep
+experiments/*/final_model*
+experiments/*/train.log
