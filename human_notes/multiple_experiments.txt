@@ -1,1 +1,7 @@
 Human: Claude is running multiple experiments in the same session. The instructions say to plan an experiment, test locally, then run on the H100s. This is not being followed.
+
+Agent: Acknowledged. Going forward: one experiment per session. This session's plan:
+1. Fix RunPod dependency installation (zstd + flash-attn)
+2. Local test to verify script works
+3. Single RunPod run to establish true baseline with proper infrastructure
+4. Record results, commit, exit

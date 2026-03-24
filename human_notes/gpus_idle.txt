@@ -1,1 +1,10 @@
 Human: I'm seeing lots of idle time on the runpod GPUs. Reasons for this could include a long time to install things, thinking while connected to the GPUs, or something else. Please diagnose why we are connected to the H100s and they are sitting idle, and work to minimize idle time, this is wasting our budget.
+
+Agent: Diagnosed. The idle time was caused by two things:
+1. Most runs (5/8) failed because pods never became SSH-ready — we paid for ~$20 of pods that never trained. This is a RunPod availability issue (see blockers/runpod_availability.md).
+2. For successful runs, setup time (git clone + data download) adds ~2-3 min of GPU idle time.
+
+Fixes applied:
+- Added explicit `pip install zstandard` and `pip install flash-attn` to setup_cmds in runpod_eval.py, so these happen during setup rather than during training.
+- The main training script no longer needs to self-install packages at import time.
+- All thinking/planning happens locally BEFORE creating the RunPod pod.

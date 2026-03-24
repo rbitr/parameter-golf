@@ -33,7 +33,7 @@ BUDGET_FILE = REPO_ROOT / "BUDGET.md"
 TEMPLATE_ID = "y5cejece4j"  # Official Parameter Golf template
 GPU_TYPE_ID = "NVIDIA H100 80GB HBM3"
 GPU_COUNT = 8
-CLOUD_TYPE = "SECURE"
+CLOUD_TYPE = "ALL"
 CONTAINER_DISK_GB = 50
 POD_NAME_PREFIX = "pgolf-eval"
 
@@ -42,7 +42,7 @@ COST_PER_HOUR = 21.52
 
 # Timeouts
 POD_READY_TIMEOUT = 900  # 15 min to become ready (8xH100 can be slow)
-TRAINING_TIMEOUT = 900   # 15 min max for training (10 min + buffer)
+TRAINING_TIMEOUT = 1200  # 20 min max for training (10 min) + eval (~5 min) + buffer
 SETUP_TIMEOUT = 300      # 5 min for setup commands
 
 
@@ -266,12 +266,16 @@ def run_evaluation(description: str = "eval", seed: int = 1337, dry_run: bool = 
         print("Setting up environment...")
         setup_cmds = [
             # Clone or pull - handle both fresh and existing states
-            "cd /workspace && if [ -d parameter-golf/.git ]; then cd parameter-golf && git pull; else rm -rf parameter-golf; git clone https://github.com/openai/parameter-golf.git; fi",
-            "cd /workspace/parameter-golf && python3 data/cached_challenge_fineweb.py --variant sp1024",
-            # zstandard is auto-installed by train_gpt.py if needed
+            ("cd /workspace && if [ -d parameter-golf/.git ]; then cd parameter-golf && git pull; else rm -rf parameter-golf; git clone https://github.com/openai/parameter-golf.git; fi", SETUP_TIMEOUT),
+            ("cd /workspace/parameter-golf && python3 data/cached_challenge_fineweb.py --variant sp1024", SETUP_TIMEOUT),
+            # Install zstandard for better compression (zstd-22 vs zlib saves ~1.5MB)
+            ("pip install --break-system-packages zstandard -q 2>/dev/null || pip install zstandard -q 2>/dev/null || echo 'zstandard install failed'", 120),
+            # Check if flash-attn already available, if not try install (compilation takes time)
+            ("python3 -c 'from flash_attn_interface import flash_attn_func; print(\"FA3 available\")' 2>/dev/null || "
+             "(pip install --break-system-packages flash-attn --no-build-isolation -q 2>/dev/null || pip install flash-attn --no-build-isolation -q 2>/dev/null || echo 'flash-attn install failed, will use SDPA fallback')", 600),
         ]
-        for cmd in setup_cmds:
-            rc, stdout, stderr = run_ssh_command(ssh_ip, ssh_port, cmd, timeout=SETUP_TIMEOUT)
+        for cmd, cmd_timeout in setup_cmds:
+            rc, stdout, stderr = run_ssh_command(ssh_ip, ssh_port, cmd, timeout=cmd_timeout)
             # Print setup command output for debugging
             if stdout.strip():
                 for line in stdout.strip().split('\n')[-5:]:

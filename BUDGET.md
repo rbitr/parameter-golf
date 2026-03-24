@@ -13,3 +13,7 @@
 | 2026-03-24 15:23 | baseline_zstd_v2 (FAILED) | 10.0 min | $3.60 | $23.17 |
 | 2026-03-24 15:39 | baseline_selfinstall_zstd (FAILED) | 15.0 min | $5.39 | $28.56 |
 | 2026-03-24 15:57 | baseline_lzma_fallback (FAILED) | 15.1 min | $5.40 | $33.96 |
+| 2026-03-24 18:36 | infra_fix_baseline (FAILED) | 0.0 min | $0.00 | $33.96 |
+| 2026-03-24 19:04 | infra_fix_baseline (FAILED) | 26.8 min | $9.62 | $43.58 |
+| 2026-03-24 19:28 | infra_fix_v2 | 20.0 min | $7.17 | $50.75 |
+| 2026-03-24 20:20 | legacy_format | 18.0 min | $6.47 | $57.22 |

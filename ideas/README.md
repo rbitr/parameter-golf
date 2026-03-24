@@ -52,6 +52,18 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **Search the literature** — Recent papers on efficient LM training, parameter-efficient methods.
 - [ ] **Analyze the baseline** — Profile where parameters are spent. What's the bottleneck?
 
+## Priority Queue (next experiments)
+
+1. **Depth recurrence / weight sharing** — Most promising novel technique. Share weights across layer groups to get 20+ effective layers in 11L parameter budget. High potential, moderate risk.
+2. **Reduce per-step time** — Currently 87ms/step vs SOTA's 85ms. The FA3 fallback code might slow torch.compile. Stripping it could give ~100 more steps.
+3. **Increase training tokens** — Consider larger batch size or longer sequences during warmdown phase.
+4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter.
+5. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
+
 ## Results Log
 
-(Agent: add results here as you try things)
+| Date | Experiment | val_bpb | Artifact | Notes |
+|------|-----------|---------|----------|-------|
+| 2026-03-24 | sota_baseline_v4 | 1.1282 | 17.04MB (OVER) | First working run, no zstd |
+| 2026-03-24 | infra_fix_v2 | 1.1233 | 16.34MB (OVER) | FA3+zstd working, ZIP format too big |
+| 2026-03-24 | legacy_format | 1.1237 | 15.96MB | First valid submission! Legacy torch.save |

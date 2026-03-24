@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89659618,
+  "val_bpb": 1.12327406,
+  "artifact_size_bytes": 16337275,
+  "train_time_ms": 600077,
+  "steps": 7007,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "infra_fix_v2",
+  "experiment": "20260324_190835_infra_fix_v2",
+  "pod_id": "amnk1ljosfn2mn",
+  "elapsed_min": 20.0,
+  "estimated_cost": 7.17
+}

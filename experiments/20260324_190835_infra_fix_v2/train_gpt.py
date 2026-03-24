@@ -1335,7 +1335,7 @@ def main() -> None:
     sd_cpu = {k: v.detach().cpu() for k, v in export_sd.items()}
     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"})
     quant_buf = io.BytesIO()
-    torch.save({"w": quant_result, "m": quant_meta}, quant_buf, _use_new_zipfile_serialization=False)
+    torch.save({"w": quant_result, "m": quant_meta}, quant_buf)
     quant_raw = quant_buf.getvalue()
     if _COMPRESSOR == "zstd":
         quant_blob = zstandard.ZstdCompressor(level=22).compress(quant_raw)

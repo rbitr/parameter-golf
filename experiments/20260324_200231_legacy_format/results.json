@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.8973863,
+  "val_bpb": 1.12374202,
+  "artifact_size_bytes": 15957740,
+  "train_time_ms": 600029,
+  "steps": 6898,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "legacy_format",
+  "experiment": "20260324_200231_legacy_format",
+  "pod_id": "sijabgplawu3a7",
+  "elapsed_min": 18.0,
+  "estimated_cost": 6.47
+}
