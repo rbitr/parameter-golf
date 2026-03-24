@@ -81,10 +81,13 @@ def wait_for_pod_ready(pod_id: str, timeout: int = POD_READY_TIMEOUT) -> dict:
     start = time.time()
     while time.time() - start < timeout:
         pod = runpod.get_pod(pod_id)
+        if not pod:
+            time.sleep(10)
+            continue
         status = pod.get("desiredStatus", "unknown")
         runtime = pod.get("runtime", {})
 
-        if status == "RUNNING" and runtime and runtime.get("uptimeInSeconds", 0) > 5:
+        if status == "RUNNING" and runtime and pod.get("uptimeSeconds", 0) > 5:
             # Check for SSH port
             ports = runtime.get("ports", [])
             ssh_port = None
@@ -232,6 +235,17 @@ def run_evaluation(description: str = "eval", seed: int = 1337, dry_run: bool = 
     try:
         # Create pod
         print(f"Creating {GPU_COUNT}x H100 pod...")
+        ssh_pub_key = None
+        for key_path in ["~/.ssh/id_ed25519.pub", "~/.ssh/id_rsa.pub"]:
+            path = os.path.expanduser(key_path)
+            if os.path.exists(path):
+                with open(path) as f:
+                    ssh_pub_key = f.read().strip()
+                break
+        if not ssh_pub_key:
+            print("ERROR: No SSH public key found at ~/.ssh/id_ed25519.pub or ~/.ssh/id_rsa.pub")
+            sys.exit(1)
+
         pod = runpod.create_pod(
             name=f"{POD_NAME_PREFIX}-{timestamp}",
             image_name="runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04",
@@ -241,6 +255,8 @@ def run_evaluation(description: str = "eval", seed: int = 1337, dry_run: bool = 
             container_disk_in_gb=CONTAINER_DISK_GB,
             template_id=TEMPLATE_ID,
             support_public_ip=True,
+            ports="22/tcp",
+            env={"PUBLIC_KEY": ssh_pub_key},
         )
         pod_id = pod["id"]
         print(f"Pod created: {pod_id}")

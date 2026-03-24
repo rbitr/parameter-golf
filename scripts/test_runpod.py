@@ -95,18 +95,64 @@ def test_full():
     print("\n4. Full test: creating a minimal pod...")
     print("   (This will cost ~$0.50-1.00)")
 
+    # Prefer cheap/common GPUs for connectivity testing; order by typical cost
+    gpu_candidates = [
+        "NVIDIA GeForce RTX 3070",
+        "NVIDIA GeForce RTX 3080",
+        "NVIDIA GeForce RTX 3080 Ti",
+        "NVIDIA GeForce RTX 3090",
+        "NVIDIA GeForce RTX 3090 Ti",
+        "NVIDIA RTX A4000",
+        "NVIDIA RTX A4500",
+        "NVIDIA RTX A5000",
+        "NVIDIA GeForce RTX 4080",
+        "NVIDIA GeForce RTX 4090",
+        "NVIDIA RTX A6000",
+        "NVIDIA L4",
+        "NVIDIA L40",
+        "NVIDIA A40",
+    ]
+
     pod_id = None
     try:
-        # Use a cheap single GPU for testing
-        pod = runpod.create_pod(
-            name="pgolf-connectivity-test",
-            image_name="runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04",
-            gpu_type_id="NVIDIA GeForce RTX 4090",
-            gpu_count=1,
-            cloud_type="COMMUNITY",
-            container_disk_in_gb=10,
-            support_public_ip=True,
-        )
+        # Read SSH public key to inject into pod
+        ssh_pub_key = None
+        for key_path in ["~/.ssh/id_ed25519.pub", "~/.ssh/id_rsa.pub"]:
+            path = os.path.expanduser(key_path)
+            if os.path.exists(path):
+                with open(path) as f:
+                    ssh_pub_key = f.read().strip()
+                break
+        if not ssh_pub_key:
+            print("   FAIL: No SSH public key found — cannot authenticate to pod")
+            return False
+
+        pod = None
+        for gpu_type in gpu_candidates:
+            for cloud_type in ("COMMUNITY", "SECURE"):
+                try:
+                    print(f"   Trying {gpu_type} ({cloud_type})...")
+                    pod = runpod.create_pod(
+                        name="pgolf-connectivity-test",
+                        image_name="runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04",
+                        gpu_type_id=gpu_type,
+                        gpu_count=1,
+                        cloud_type=cloud_type,
+                        container_disk_in_gb=10,
+                        support_public_ip=True,
+                        ports="22/tcp",
+                        env={"PUBLIC_KEY": ssh_pub_key},
+                    )
+                    break
+                except Exception:
+                    continue
+            if pod:
+                break
+
+        if not pod:
+            print("   FAIL: No available GPU found across all candidates")
+            return False
+
         pod_id = pod["id"]
         print(f"   Pod created: {pod_id}")
 
@@ -117,16 +163,21 @@ def test_full():
         ssh_port = None
         while time.time() - start < 180:
             pod_info = runpod.get_pod(pod_id)
+            if not pod_info:
+                time.sleep(5)
+                continue
+            status = pod_info.get("desiredStatus", "?")
+            uptime = pod_info.get("uptimeSeconds", 0)
             runtime = pod_info.get("runtime", {})
-            if runtime and runtime.get("uptimeInSeconds", 0) > 5:
-                ports = runtime.get("ports", [])
-                for p in ports:
-                    if p.get("privatePort") == 22:
-                        ssh_ip = p.get("ip")
-                        ssh_port = p.get("publicPort")
-                        break
-                if ssh_ip and ssh_port:
+            ports = (runtime or {}).get("ports", [])
+            print(f"   status={status} uptime={uptime}s ports={ports}")
+            for p in (ports or []):
+                if p.get("privatePort") == 22:
+                    ssh_ip = p.get("ip")
+                    ssh_port = p.get("publicPort")
                     break
+            if ssh_ip and ssh_port:
+                break
             time.sleep(5)
 
         if not ssh_ip:
