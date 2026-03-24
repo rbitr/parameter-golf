@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.90487711,
+  "val_bpb": 1.12817851,
+  "artifact_size_bytes": 17040647,
+  "train_time_ms": 600061,
+  "steps": 6038,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "sota_baseline_v4",
+  "experiment": "20260324_143151_sota_baseline_v4",
+  "pod_id": "5lnfeesr8fnjv7",
+  "elapsed_min": 19.1,
+  "estimated_cost": 6.85
+}

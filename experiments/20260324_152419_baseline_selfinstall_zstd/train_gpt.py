@@ -11,7 +11,6 @@ import time
 import uuid
 import zlib
 from pathlib import Path
-import lzma
 try:
     import zstandard
     _COMPRESSOR = "zstd"
@@ -22,7 +21,7 @@ except ImportError:
         import zstandard
         _COMPRESSOR = "zstd"
     except Exception:
-        _COMPRESSOR = "lzma"
+        _COMPRESSOR = "zlib"
 import numpy as np
 import sentencepiece as spm
 import torch
@@ -1337,12 +1336,7 @@ def main() -> None:
     quant_buf = io.BytesIO()
     torch.save({"w": quant_result, "m": quant_meta}, quant_buf)
     quant_raw = quant_buf.getvalue()
-    if _COMPRESSOR == "zstd":
-        quant_blob = zstandard.ZstdCompressor(level=22).compress(quant_raw)
-    elif _COMPRESSOR == "lzma":
-        quant_blob = lzma.compress(quant_raw, preset=9 | lzma.PRESET_EXTREME)
-    else:
-        quant_blob = zlib.compress(quant_raw, 9)
+    quant_blob = zstandard.ZstdCompressor(level=22).compress(quant_raw) if _COMPRESSOR == "zstd" else zlib.compress(quant_raw, 9)
     if master_process:
         with open("final_model.int6.ptz", "wb") as f:
             f.write(quant_blob)
@@ -1356,11 +1350,7 @@ def main() -> None:
     with open("final_model.int6.ptz", "rb") as f:
         quant_blob_disk = f.read()
     quant_state = torch.load(
-        io.BytesIO(
-            zstandard.ZstdDecompressor().decompress(quant_blob_disk) if _COMPRESSOR == "zstd"
-            else lzma.decompress(quant_blob_disk) if _COMPRESSOR == "lzma"
-            else zlib.decompress(quant_blob_disk)
-        ),
+        io.BytesIO(zstandard.ZstdDecompressor().decompress(quant_blob_disk) if _COMPRESSOR == "zstd" else zlib.decompress(quant_blob_disk)),
         map_location="cpu",
     )
     deq_state = dequantize_mixed_int6(quant_state["w"], quant_state["m"], sd_cpu)

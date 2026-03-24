@@ -1,0 +1,1 @@
+Human: Claude is running multiple experiments in the same session. The instructions say to plan an experiment, test locally, then run on the H100s. This is not being followed.

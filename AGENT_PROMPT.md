@@ -25,6 +25,7 @@ Read these files to understand where you are:
 - `experiments/` — all past experiment results (check `results.json` in each)
 - `ideas/README.md` — your running list of optimization ideas
 - `blockers/` — any issues requiring human attention
+- `human_notes/` - any issues that a human has noticed at run time that shouldbe considered and replied to
 
 ### 2. Study and Think
 
@@ -164,6 +165,7 @@ You cannot talk to a human directly. Your channels are:
 - **`ideas/README.md`:** Your evolving research agenda
 - **`blockers/`:** Issues requiring human attention
 - **`CURRENT_BEST.md`:** Progress tracking
+- **`human_notes/`:** Notes to you, and your replies (leave a reply prefaced by Agent: in any file)
 
 A human will periodically review these.
 

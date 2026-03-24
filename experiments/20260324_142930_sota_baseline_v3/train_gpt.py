@@ -11,18 +11,11 @@ import time
 import uuid
 import zlib
 from pathlib import Path
-import lzma
 try:
     import zstandard
     _COMPRESSOR = "zstd"
 except ImportError:
-    import subprocess as _sp
-    try:
-        _sp.check_call([sys.executable, "-m", "pip", "install", "zstandard", "-q"], timeout=60)
-        import zstandard
-        _COMPRESSOR = "zstd"
-    except Exception:
-        _COMPRESSOR = "lzma"
+    _COMPRESSOR = "zlib"
 import numpy as np
 import sentencepiece as spm
 import torch
@@ -33,9 +26,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 try:
     from flash_attn_interface import flash_attn_func as flash_attn_3_func
     _HAS_FA3 = True
-except Exception as _fa3_err:
+except ImportError:
     _HAS_FA3 = False
-    print(f"FA3 not available: {_fa3_err}")
 class Hyperparameters:
     data_path = os.environ.get("DATA_PATH", "./data/datasets/fineweb10B_sp1024")
     train_files = os.path.join(data_path, "fineweb_train_*.bin")
@@ -1337,12 +1329,7 @@ def main() -> None:
     quant_buf = io.BytesIO()
     torch.save({"w": quant_result, "m": quant_meta}, quant_buf)
     quant_raw = quant_buf.getvalue()
-    if _COMPRESSOR == "zstd":
-        quant_blob = zstandard.ZstdCompressor(level=22).compress(quant_raw)
-    elif _COMPRESSOR == "lzma":
-        quant_blob = lzma.compress(quant_raw, preset=9 | lzma.PRESET_EXTREME)
-    else:
-        quant_blob = zlib.compress(quant_raw, 9)
+    quant_blob = zstandard.ZstdCompressor(level=22).compress(quant_raw) if _COMPRESSOR == "zstd" else zlib.compress(quant_raw, 9)
     if master_process:
         with open("final_model.int6.ptz", "wb") as f:
             f.write(quant_blob)
@@ -1356,11 +1343,7 @@ def main() -> None:
     with open("final_model.int6.ptz", "rb") as f:
         quant_blob_disk = f.read()
     quant_state = torch.load(
-        io.BytesIO(
-            zstandard.ZstdDecompressor().decompress(quant_blob_disk) if _COMPRESSOR == "zstd"
-            else lzma.decompress(quant_blob_disk) if _COMPRESSOR == "lzma"
-            else zlib.decompress(quant_blob_disk)
-        ),
+        io.BytesIO(zstandard.ZstdDecompressor().decompress(quant_blob_disk) if _COMPRESSOR == "zstd" else zlib.decompress(quant_blob_disk)),
         map_location="cpu",
     )
     deq_state = dequantize_mixed_int6(quant_state["w"], quant_state["m"], sd_cpu)

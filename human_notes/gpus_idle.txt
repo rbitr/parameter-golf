@@ -1,0 +1,1 @@
+Human: I'm seeing lots of idle time on the runpod GPUs. Reasons for this could include a long time to install things, thinking while connected to the GPUs, or something else. Please diagnose why we are connected to the H100s and they are sitting idle, and work to minimize idle time, this is wasting our budget.

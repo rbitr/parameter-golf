@@ -13,11 +13,15 @@ No experiments run yet. Starting from baseline.
 
 | Metric | Value |
 |--------|-------|
-| val_bpb | — |
-| val_loss | — |
-| artifact_size | — |
-| experiment | — |
-| seed | — |
+| val_bpb | 1.1282 |
+| val_loss | 1.9049 |
+| artifact_size | 17,040,647 bytes (OVER LIMIT - zlib; ~15.9MB with lzma fallback) |
+| experiment | 20260324_143151_sota_baseline_v4 |
+| seed | 1337 |
+
+**Note:** Artifact is over 16MB due to zlib compression (zstandard not on RunPod).
+lzma fallback added — should bring it to ~15.9MB. Needs validation on RunPod.
+Also running ~99ms/step (vs SOTA 85ms/step) due to missing FA3 — ~1000 fewer steps.
 
 ## Leaderboard SOTA (for reference)
 

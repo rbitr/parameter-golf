@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.90533836,
+  "val_bpb": 1.12845169,
+  "artifact_size_bytes": 17042222,
+  "train_time_ms": 600038,
+  "steps": 6028,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "baseline_zstd_fa3",
+  "experiment": "20260324_145323_baseline_zstd_fa3",
+  "pod_id": "5h50msr7004dvk",
+  "elapsed_min": 18.9,
+  "estimated_cost": 6.78
+}

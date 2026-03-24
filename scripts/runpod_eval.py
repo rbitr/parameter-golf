@@ -41,7 +41,7 @@ POD_NAME_PREFIX = "pgolf-eval"
 COST_PER_HOUR = 21.52
 
 # Timeouts
-POD_READY_TIMEOUT = 300  # 5 min to become ready
+POD_READY_TIMEOUT = 900  # 15 min to become ready (8xH100 can be slow)
 TRAINING_TIMEOUT = 900   # 15 min max for training (10 min + buffer)
 SETUP_TIMEOUT = 300      # 5 min for setup commands
 
@@ -51,8 +51,8 @@ def get_budget_spent() -> float:
     if not BUDGET_FILE.exists():
         return 0.0
     text = BUDGET_FILE.read_text()
-    # Look for the last "Cumulative:" line
-    matches = re.findall(r"Cumulative:\s*\$?([\d.]+)", text)
+    # Parse last data row of the markdown table: last column is cumulative
+    matches = re.findall(r"\|\s*\$?([\d.]+)\s*\|?\s*$", text, re.MULTILINE)
     return float(matches[-1]) if matches else 0.0
 
 
@@ -87,19 +87,17 @@ def wait_for_pod_ready(pod_id: str, timeout: int = POD_READY_TIMEOUT) -> dict:
         status = pod.get("desiredStatus", "unknown")
         runtime = pod.get("runtime", {})
 
-        if status == "RUNNING" and runtime and pod.get("uptimeSeconds", 0) > 5:
-            # Check for SSH port
-            ports = runtime.get("ports", [])
-            ssh_port = None
-            ssh_ip = None
-            for p in ports:
-                if p.get("privatePort") == 22:
-                    ssh_ip = p.get("ip")
-                    ssh_port = p.get("publicPort")
-                    break
-            if ssh_ip and ssh_port:
-                print(f"Pod ready: {ssh_ip}:{ssh_port}")
-                return {"pod": pod, "ssh_ip": ssh_ip, "ssh_port": ssh_port}
+        ports = (runtime or {}).get("ports", [])
+        ssh_ip = None
+        ssh_port = None
+        for p in (ports or []):
+            if p.get("privatePort") == 22:
+                ssh_ip = p.get("ip")
+                ssh_port = p.get("publicPort")
+                break
+        if ssh_ip and ssh_port:
+            print(f"Pod ready: {ssh_ip}:{ssh_port}")
+            return {"pod": pod, "ssh_ip": ssh_ip, "ssh_port": ssh_port}
 
         print(f"  Waiting for pod... status={status}, elapsed={time.time()-start:.0f}s")
         time.sleep(10)
@@ -167,7 +165,7 @@ def parse_training_log(log_text: str) -> dict:
 
     # Look for final int8 roundtrip results (the actual submission metrics)
     for line in log_text.splitlines():
-        if "final_int8_zlib_roundtrip " in line and "val_bpb:" in line:
+        if "final_int8_zlib_roundtrip" in line and "val_bpb:" in line:
             m = re.search(r"val_loss:([\d.]+)", line)
             if m:
                 results["val_loss"] = float(m.group(1))
@@ -248,14 +246,12 @@ def run_evaluation(description: str = "eval", seed: int = 1337, dry_run: bool = 
 
         pod = runpod.create_pod(
             name=f"{POD_NAME_PREFIX}-{timestamp}",
-            image_name="runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04",
             gpu_type_id=GPU_TYPE_ID,
             gpu_count=GPU_COUNT,
             cloud_type=CLOUD_TYPE,
             container_disk_in_gb=CONTAINER_DISK_GB,
             template_id=TEMPLATE_ID,
             support_public_ip=True,
-            ports="22/tcp",
             env={"PUBLIC_KEY": ssh_pub_key},
         )
         pod_id = pod["id"]
@@ -269,13 +265,21 @@ def run_evaluation(description: str = "eval", seed: int = 1337, dry_run: bool = 
         # Setup: clone repo and download data
         print("Setting up environment...")
         setup_cmds = [
-            "cd /workspace && git clone https://github.com/openai/parameter-golf.git 2>/dev/null || (cd parameter-golf && git pull)",
+            # Clone or pull - handle both fresh and existing states
+            "cd /workspace && if [ -d parameter-golf/.git ]; then cd parameter-golf && git pull; else rm -rf parameter-golf; git clone https://github.com/openai/parameter-golf.git; fi",
             "cd /workspace/parameter-golf && python3 data/cached_challenge_fineweb.py --variant sp1024",
+            # zstandard is auto-installed by train_gpt.py if needed
         ]
         for cmd in setup_cmds:
             rc, stdout, stderr = run_ssh_command(ssh_ip, ssh_port, cmd, timeout=SETUP_TIMEOUT)
+            # Print setup command output for debugging
+            if stdout.strip():
+                for line in stdout.strip().split('\n')[-5:]:
+                    print(f"    {line}")
             if rc != 0:
                 print(f"  Setup command failed (rc={rc}): {stderr[:500]}")
+                if "No such file" in stderr or "not a git repository" in stderr:
+                    raise RuntimeError(f"Critical setup failure: {stderr[:200]}")
 
         # Upload our modified training script
         print("Uploading training script...")
@@ -311,8 +315,8 @@ def run_evaluation(description: str = "eval", seed: int = 1337, dry_run: bool = 
         # Try to download model artifact
         try:
             scp_download(ssh_ip, ssh_port,
-                         "/workspace/parameter-golf/final_model.int8.ptz",
-                         str(exp_dir / "final_model.int8.ptz"))
+                         "/workspace/parameter-golf/final_model.int6.ptz",
+                         str(exp_dir / "final_model.int6.ptz"))
         except Exception as e:
             print(f"  Could not download model artifact: {e}")
 
