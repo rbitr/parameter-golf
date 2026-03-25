@@ -1,0 +1,81 @@
+W0325 14:00:59.773000 1247 torch/distributed/run.py:803] 
+W0325 14:00:59.773000 1247 torch/distributed/run.py:803] *****************************************
+W0325 14:00:59.773000 1247 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0325 14:00:59.773000 1247 torch/distributed/run.py:803] *****************************************
+logs/eval_20260325_135701.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:26993756
+mtp_num_heads:0 mtp_loss_weight:0.2 mtp_params:0
+XSA:last_4 active_layers:[7, 8, 9, 10]
+world_size:8 grad_accum_steps:1
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.035 head_lr:0.0 matrix_lr:0.025 scalar_lr:0.025
+train_batch_tokens:786432 train_seq_len:2048 iterations:20000 warmup_steps:20 max_wallclock_seconds:600.000
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+step:0/20000 val_loss:6.9279 val_bpb:4.1031 train_time:0ms step_avg:0.01ms
+step:1/20000 train_loss:6.9299 train_time:142ms step_avg:142.30ms
+step:2/20000 train_loss:8.5642 train_time:224ms step_avg:111.93ms
+step:3/20000 train_loss:7.8180 train_time:308ms step_avg:102.57ms
+step:4/20000 train_loss:7.2359 train_time:391ms step_avg:97.87ms
+step:5/20000 train_loss:7.0664 train_time:475ms step_avg:95.01ms
+step:6/20000 train_loss:6.8293 train_time:559ms step_avg:93.20ms
+step:7/20000 train_loss:6.7203 train_time:643ms step_avg:91.86ms
+step:8/20000 train_loss:6.7477 train_time:727ms step_avg:90.81ms
+step:9/20000 train_loss:6.4051 train_time:810ms step_avg:90.03ms
+step:10/20000 train_loss:6.0804 train_time:895ms step_avg:89.47ms
+step:500/20000 train_loss:2.4044 train_time:42795ms step_avg:85.59ms
+step:1000/20000 train_loss:2.2702 train_time:85761ms step_avg:85.76ms
+step:1500/20000 train_loss:2.2141 train_time:128707ms step_avg:85.80ms
+step:2000/20000 train_loss:2.0556 train_time:171592ms step_avg:85.80ms
+step:2500/20000 train_loss:2.1596 train_time:214451ms step_avg:85.78ms
+step:3000/20000 train_loss:2.1562 train_time:257288ms step_avg:85.76ms
+step:3500/20000 train_loss:2.1732 train_time:300105ms step_avg:85.74ms
+step:4000/20000 train_loss:1.9637 train_time:342899ms step_avg:85.72ms
+step:4000/20000 val_loss:2.0567 val_bpb:1.2181 train_time:342904ms step_avg:85.73ms
+step:4500/20000 train_loss:2.1172 train_time:385680ms step_avg:85.71ms
+step:5000/20000 train_loss:2.0971 train_time:428543ms step_avg:85.71ms
+step:5500/20000 train_loss:2.0140 train_time:471315ms step_avg:85.69ms
+step:6000/20000 train_loss:1.9370 train_time:514077ms step_avg:85.68ms
+swa:start step:6350
+late_qat:enabled step:6478 scale:0.1498
+step:6500/20000 train_loss:2.0738 train_time:556989ms step_avg:85.69ms
+step:6999/20000 val_loss:1.9246 val_bpb:1.1398 train_time:600007ms step_avg:85.73ms
+stopping_early: wallclock_cap train_time:600007ms step:6999/20000
+peak memory allocated: 20673 MiB reserved: 20718 MiB
+ema:applying EMA weights
+DIAGNOSTIC post_ema val_loss:1.9229 val_bpb:1.1388 eval_time:1971ms
+Serialized model: 106178569 bytes
+Code size: 68024 bytes
+Serialized model int6+zstd: 15721679 bytes
+Total submission size int6+zstd: 15789703 bytes
+Total submission size int8+zlib: 15789703 bytes
+final_int6_roundtrip val_loss:1.9368 val_bpb:1.1471 eval_time:38430ms
+final_int6_roundtrip_exact val_loss:1.93680648 val_bpb:1.14708589
+final_int6_sliding_window val_loss:1.8966 val_bpb:1.1232 stride:64 eval_time:93702ms
+final_int6_sliding_window_exact val_loss:1.89655386 val_bpb:1.12324899
+final_int8_zlib_roundtrip_exact val_loss:1.89655386 val_bpb:1.12324899
+
+Warning: Permanently added '[103.207.149.111]:18640' (ED25519) to the list of known hosts.

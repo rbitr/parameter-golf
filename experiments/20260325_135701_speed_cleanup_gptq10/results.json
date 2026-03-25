@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89655386,
+  "val_bpb": 1.12324899,
+  "artifact_size_bytes": 15789703,
+  "train_time_ms": 600007,
+  "steps": 6999,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "speed_cleanup_gptq10",
+  "experiment": "20260325_135701_speed_cleanup_gptq10",
+  "pod_id": "5lshapwjl54fwy",
+  "elapsed_min": 19.3,
+  "estimated_cost": 6.92
+}

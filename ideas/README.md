@@ -54,11 +54,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Reduce per-step time** — Currently 87ms/step vs SOTA's 85ms. Remove redundant zero_grad, optimize compilation. Even 2ms/step = ~150 more steps.
-2. **Hyperparameter tuning** — Warmdown iters (try 3800), SWA frequency (every 25 vs 50), LR schedule tweaks.
-3. **Better GPTQ quantization** — More clip percentile candidates (10 instead of 5), or full column-wise GPTQ with calibration data.
-4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
-5. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. But increases artifact size.
+1. **Close remaining 1.17ms/step gap** — Currently 85.7ms vs SOTA's 84.6ms. Profile differences, optimize compile, try CUDA_LAUNCH_BLOCKING=0. Even 1ms = ~70 more steps.
+2. **Hyperparameter tuning** — Warmdown iters (try 3800), SWA frequency (every 25 vs 50), LR schedule tweaks. Low risk, potential 0.0002-0.0005 improvement.
+3. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params. Medium risk, potential 0.002+ improvement.
+4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Higher risk.
+5. **Alternative eval strategies** — Different sliding window strides, or longer eval context.
 
 ## Results Log
 
@@ -68,3 +68,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-24 | infra_fix_v2 | 1.1233 | 16.34MB (OVER) | FA3+zstd working, ZIP format too big |
 | 2026-03-24 | legacy_format | 1.1237 | 15.96MB | First valid submission! Legacy torch.save |
 | 2026-03-25 | depth_recurrence_512d | 1.1591 | 10.69MB | **REGRESSED**: weight sharing -0.035 BPB. Model too small for sharing. |
+| 2026-03-25 | speed_cleanup_gptq10 | 1.1232 | 15.79MB | **NEW BEST**: +101 steps from cleanup, 10 GPTQ clips. -0.0005 BPB. |
