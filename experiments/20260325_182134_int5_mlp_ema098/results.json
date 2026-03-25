@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.92932646,
+  "val_bpb": 1.14265883,
+  "artifact_size_bytes": 13780711,
+  "train_time_ms": 600024,
+  "steps": 7017,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "int5_mlp_ema098",
+  "experiment": "20260325_182134_int5_mlp_ema098",
+  "pod_id": "wi2bxrfo8t1i40",
+  "elapsed_min": 19.0,
+  "estimated_cost": 6.82
+}

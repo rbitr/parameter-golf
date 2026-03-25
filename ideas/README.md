@@ -33,9 +33,10 @@ Evolving list of ideas to explore. Mark with status as you go:
 ## Quantization & Compression
 
 - [ ] **BitNet / ternary weights** — Train with ternary or binary weights from scratch. Zero quantization gap.
-- [ ] **Mixed precision per-layer** — Different bit widths for different layer types. Attention may need more precision than MLP.
-- [ ] **QAT from the start** — Instead of late QAT, train with fake quantization from step 0.
-- [ ] **Int4/Int5 for some tensors** — Push below int6 where possible.
+- [x] **Mixed precision per-layer (int5 MLP)** — TRIED: int5 for MLPs, int6 for attention. RESULT: **+0.019 BPB worse**. Int5 quantization gap is devastating. Not viable at this model size.
+- [x] **Fix dead-coded QAT** — TRIED: weight-replacement QAT (outside compiled graph). RESULT: Quant gap reduced 34% (0.0083→0.0055 BPB) but artifact grew +0.46MB (16.25MB, OVER). QAT weights compress poorly. Threshold=0.15 is too aggressive; try 0.05 or combine with tighter GPTQ.
+- [-] **QAT from the start** — Abandoned: too expensive (model can't learn with full quantization noise from step 0).
+- [-] **Int4/Int5 for some tensors** — Abandoned: int5 MLP experiment showed quantization error is too large.
 - [ ] **Better compression** — zstd-22 vs brotli vs custom schemes. The compressor matters.
 - [ ] **Structured sparsity** — 2:4 or 4:8 structured sparsity for better compression ratios.
 - [ ] **Vocabulary size optimization** — Larger vocab = fewer tokens = potentially better BPB, but more embedding params. Find the sweet spot.
@@ -57,11 +58,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Tighter GPTQ clip set** — Try clips like [0.995, 0.997, 0.998, 0.999, 0.9995, 0.9999, 0.99999, 1.0] to produce more compressible weights. FINDING: tighter clips = better compression. Our 10-clip set with 0.998 min clip produces smaller files than 5-clip with 0.999 min. Going tighter might unlock EMA 0.998 viability.
-2. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
-3. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params. Need data for other vocab sizes.
-4. **Alternative eval strategies** — Sliding window stride optimization, doc-isolated evaluation.
-5. **Gradient accumulation / batch size tuning** — Currently 786K tokens/step across 8 GPUs.
+1. **Fix dead-coded QAT** — IN PROGRESS. Weight-replacement QAT avoids graph recompilation. Quant gap is 0.0083 BPB; reducing by 20-30% gives 0.0017-0.0025 BPB — much bigger than 0.0004 gap to SOTA.
+2. **Speed optimization** — SOTA gets 7101 steps vs our 6999. Each additional step matters. Profile where time is spent.
+3. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
+4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
+5. **Sliding window stride tuning** — Currently stride=64. Is that optimal?
 
 ## Key Findings
 
@@ -95,3 +96,5 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-25 | ema_decay_0998 | 1.1229 | 16.10MB | **FAILED**: Best BPB yet but artifact over 16MB. EMA 0.998 compresses poorly. |
 | 2026-03-25 | ema098_gptq5 | 1.1232 | 15.92MB | Under 16MB but BPB same as EMA 0.997 + 10 clips. 5 clips alone doesn't improve. |
 | 2026-03-25 | ema098_adaptive_gptq | 1.1233 | 16.81MB | **FAILED**: Both 10-clip and 5-clip over 16MB. 5-clip LARGER than 10-clip! |
+| 2026-03-25 | int5_mlp_ema098 | 1.1427 | 13.78MB | **REGRESSED**: Int5 MLP quant gap devastating (+0.019 BPB). |
+| 2026-03-25 | working_qat_fix | 1.1236 | 16.25MB | **FAILED**: QAT reduced quant gap 34% but artifact +0.46MB over 16MB. |

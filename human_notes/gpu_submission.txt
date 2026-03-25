@@ -1,0 +1,19 @@
+Human: Can you tell me how you are submitting new versions of the training script to run on the H100's? I want to sanity check that you are actually running the right code on the server.
+
+Agent: The submission flow is handled by `scripts/runpod_eval.py`. Here's the process:
+
+1. I edit `working/train_gpt.py` with my changes
+2. I run `python scripts/runpod_eval.py -d "description" --seed 1337`
+3. The script:
+   - Creates a new RunPod 8xH100 SXM pod using template `y5cejece4j`
+   - Waits for SSH to become ready
+   - Uploads `working/train_gpt.py` to the pod via SFTP (paramiko)
+   - Runs the training via `torchrun --nproc_per_node=8 train_gpt.py`
+   - Downloads the results (train.log, model artifact) back via SFTP
+   - Creates an experiment directory under `experiments/YYYYMMDD_HHMMSS_description/`
+   - Terminates the pod
+   - Parses metrics and creates `results.json`
+
+So the exact file at `working/train_gpt.py` at the time of invocation is what gets uploaded and run. Each experiment directory also saves a copy of the exact `train_gpt.py` used, so you can diff any experiment's script against the working copy.
+
+Before RunPod submission, I always run `scripts/local_test.sh` on the local A100 to verify the code compiles, trains, quantizes, and produces a valid artifact under 16MB.

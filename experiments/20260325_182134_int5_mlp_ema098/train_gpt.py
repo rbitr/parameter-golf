@@ -72,7 +72,7 @@ class Hyperparameters:
     mtp_num_heads = int(os.environ.get("MTP_NUM_HEADS", 0))
     mtp_loss_weight = float(os.environ.get("MTP_LOSS_WEIGHT", 0.2))
     muon_beta2 = float(os.environ.get("MUON_BETA2", 0.95))
-    swa_enabled = bool(int(os.environ.get("SWA_ENABLED", "0")))  # disabled: SOTA collects but never applies SWA
+    swa_enabled = bool(int(os.environ.get("SWA_ENABLED", "0")))  # disabled: proven no benefit over EMA
     swa_every = int(os.environ.get("SWA_EVERY", 50))
     muon_wd = float(os.environ.get("MUON_WD", 0.04))
     adam_wd = float(os.environ.get("ADAM_WD", 0.04))
@@ -83,7 +83,7 @@ class Hyperparameters:
     rope_dims = int(os.environ.get("ROPE_DIMS", 16))
     ln_scale = bool(int(os.environ.get("LN_SCALE", "1")))
     dtg_enabled = bool(int(os.environ.get("DTG_ENABLED", "0")))
-    late_qat_threshold = float(os.environ.get("LATE_QAT_THRESHOLD", 0.0))  # disabled: QAT increases artifact size ~0.5MB
+    late_qat_threshold = float(os.environ.get("LATE_QAT_THRESHOLD", 0.15))
     ve_enabled = bool(int(os.environ.get("VE_ENABLED", "1")))
     ve_dim = int(os.environ.get("VE_DIM", 128))
     ve_layers = os.environ.get("VE_LAYERS", "9,10")
@@ -414,10 +414,17 @@ class RMSNorm(nn.Module):
         self.eps = eps
     def forward(self, x: Tensor) -> Tensor:
         return F.rms_norm(x, (x.size(-1),), eps=self.eps)
-_QAT_ENABLED = False  # Module-level global for weight-replacement QAT
 class CastedLinear(nn.Linear):
+    _qat_enabled: bool = False
     def forward(self, x: Tensor) -> Tensor:
         w = self.weight.to(x.dtype)
+        if CastedLinear._qat_enabled and self.training and w.ndim == 2:
+            with torch.no_grad():
+                w32 = self.weight.float()
+                row_max = w32.abs().amax(dim=1)
+                scale = (row_max / 31.0).clamp_min(1.0 / 31.0)
+                w_q = (torch.clamp(torch.round(w32 / scale[:, None]), -32, 31) * scale[:, None]).to(x.dtype)
+            w = w + (w_q - w).detach()
         bias = self.bias.to(x.dtype) if self.bias is not None else None
         return F.linear(x, w, bias)
 def restore_low_dim_params_to_fp32(module: nn.Module) -> None:
@@ -967,7 +974,7 @@ def dequantize_mixed_int6(result: dict[str, Tensor], meta: dict[str, object],
             out[name] = (q.float() * float(s.item())).to(orig_dtype)
     return out
 def main() -> None:
-    global zeropower_via_newtonschulz5, _QAT_ENABLED
+    global zeropower_via_newtonschulz5
     code = Path(__file__).read_text(encoding="utf-8")
     args = Hyperparameters()
     zeropower_via_newtonschulz5 = torch.compile(zeropower_via_newtonschulz5)
@@ -1040,7 +1047,7 @@ def main() -> None:
     log0(f"val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path={args.tokenizer_path}")
     log0(f"train_loader:dataset:{dataset_dir.name} train_shards:{actual_train_files}")
     log0(f"val_loader:shards pattern={args.val_files} tokens:{val_tokens.numel() - 1}")
-    _QAT_ENABLED = args.qat_enabled
+    CastedLinear._qat_enabled = args.qat_enabled
     base_model = GPT(
         vocab_size=args.vocab_size,
         num_layers=args.num_layers,
@@ -1197,7 +1204,7 @@ def main() -> None:
     swa_state: dict[str, Tensor] | None = None
     swa_count = 0
     ema_state = {name: t.detach().float().clone() for name, t in base_model.state_dict().items()}
-    ema_decay = 0.997
+    ema_decay = 0.998
     training_time_ms = 0.0
     stop_after_step: int | None = None
     torch.cuda.synchronize()
@@ -1236,21 +1243,9 @@ def main() -> None:
             break
         elapsed_ms = training_time_ms + 1000.0 * (time.perf_counter() - t0)
         scale = lr_mul(step, elapsed_ms)
-        if args.late_qat_threshold > 0 and scale < args.late_qat_threshold and not _QAT_ENABLED:
-            _QAT_ENABLED = True
+        if args.late_qat_threshold > 0 and scale < args.late_qat_threshold and not CastedLinear._qat_enabled:
+            CastedLinear._qat_enabled = True
             log0(f"late_qat:enabled step:{step} scale:{scale:.4f}")
-        # Weight-replacement QAT: quantize weights before forward, restore after backward
-        # This avoids changing the compiled graph while still providing STE gradients
-        _qat_saved: dict[str, Tensor] = {}
-        if _QAT_ENABLED:
-            with torch.no_grad():
-                for name, p in base_model.named_parameters():
-                    if p.ndim == 2 and p.numel() > 65536 and not any(pat in name for pat in CONTROL_TENSOR_NAME_PATTERNS):
-                        _qat_saved[name] = p.data.clone()
-                        w32 = p.data.float()
-                        row_max = w32.abs().amax(dim=1)
-                        s = (row_max / 31.0).clamp_min(1.0 / 31.0)
-                        p.data.copy_(torch.clamp(torch.round(w32 / s[:, None]), -32, 31).mul_(s[:, None]).to(p.dtype))
         zero_grad_all()
         train_loss = torch.zeros((), device=device)
         for micro_step in range(grad_accum_steps):
@@ -1261,12 +1256,6 @@ def main() -> None:
                 loss = model(x, y)
             train_loss += loss.detach()
             (loss * grad_scale).backward()
-        # Restore original weights so optimizer updates the unquantized parameters
-        if _qat_saved:
-            with torch.no_grad():
-                for name, p in base_model.named_parameters():
-                    if name in _qat_saved:
-                        p.data.copy_(_qat_saved[name])
         train_loss /= grad_accum_steps
         frac = min(step / args.muon_momentum_warmup_steps, 1.0) if args.muon_momentum_warmup_steps > 0 else 1.0
         muon_momentum = (1 - frac) * args.muon_momentum_warmup_start + frac * args.muon_momentum
@@ -1345,9 +1334,9 @@ def main() -> None:
     sd_cpu = {k: v.detach().cpu() for k, v in export_sd.items()}
     code_bytes = len(code.encode("utf-8"))
     max_artifact = 16_000_000
-    # Try 10 GPTQ clips first (best quality), fall back to 5 if artifact too large
+    # Try int5 MLP + int6 attn with 10 GPTQ clips first, fall back to 5 if artifact too large
     for clip_set_name, clip_set in [("10-clip", GPTQ_CLIPS_10), ("5-clip", GPTQ_CLIPS_5)]:
-        quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, clips=clip_set)
+        quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"attn"}, clips=clip_set, int5_cats={"mlp"})
         quant_buf = io.BytesIO()
         torch.save({"w": quant_result, "m": quant_meta}, quant_buf, _use_new_zipfile_serialization=False)
         quant_raw = quant_buf.getvalue()

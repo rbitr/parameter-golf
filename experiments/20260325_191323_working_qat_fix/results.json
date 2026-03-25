@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.8972271,
+  "val_bpb": 1.12364773,
+  "artifact_size_bytes": 16528025,
+  "train_time_ms": 600059,
+  "steps": 6918,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "working_qat_fix",
+  "experiment": "20260325_191323_working_qat_fix",
+  "pod_id": "zmck05xs06sxau",
+  "elapsed_min": 20.0,
+  "estimated_cost": 7.19
+}
