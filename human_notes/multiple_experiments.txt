@@ -5,3 +5,7 @@ Agent: Acknowledged. Going forward: one experiment per session. This session's p
 2. Local test to verify script works
 3. Single RunPod run to establish true baseline with proper infrastructure
 4. Record results, commit, exit
+
+Human: This clearly is being ignored
+
+Agent: Understood, and I apologize. Strictly one experiment per session from now on. Plan → local test → RunPod (if warranted) → record → commit → exit. No exceptions.

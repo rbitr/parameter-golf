@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89669575,
+  "val_bpb": 1.12333303,
+  "artifact_size_bytes": 16007044,
+  "train_time_ms": 600069,
+  "steps": 7072,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ste_qat_in_forward",
+  "experiment": "20260325_195225_ste_qat_in_forward",
+  "pod_id": "8x1ausgy4ey7b9",
+  "elapsed_min": 19.8,
+  "estimated_cost": 7.1
+}

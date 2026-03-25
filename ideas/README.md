@@ -34,7 +34,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 - [ ] **BitNet / ternary weights** — Train with ternary or binary weights from scratch. Zero quantization gap.
 - [x] **Mixed precision per-layer (int5 MLP)** — TRIED: int5 for MLPs, int6 for attention. RESULT: **+0.019 BPB worse**. Int5 quantization gap is devastating. Not viable at this model size.
-- [x] **Fix dead-coded QAT** — TRIED: weight-replacement QAT (outside compiled graph). RESULT: Quant gap reduced 34% (0.0083→0.0055 BPB) but artifact grew +0.46MB (16.25MB, OVER). QAT weights compress poorly. Threshold=0.15 is too aggressive; try 0.05 or combine with tighter GPTQ.
+- [x] **Fix dead-coded QAT** — TRIED twice: (1) weight-replacement QAT: +0.46MB over. (2) STE QAT in forward (matching SOTA): +0.22MB over (16.007MB). STE is much better but still over 16MB. Need ~200KB savings elsewhere to enable QAT.
 - [-] **QAT from the start** — Abandoned: too expensive (model can't learn with full quantization noise from step 0).
 - [-] **Int4/Int5 for some tensors** — Abandoned: int5 MLP experiment showed quantization error is too large.
 - [ ] **Better compression** — zstd-22 vs brotli vs custom schemes. The compressor matters.
@@ -58,8 +58,8 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Fix dead-coded QAT** — IN PROGRESS. Weight-replacement QAT avoids graph recompilation. Quant gap is 0.0083 BPB; reducing by 20-30% gives 0.0017-0.0025 BPB — much bigger than 0.0004 gap to SOTA.
-2. **Speed optimization** — SOTA gets 7101 steps vs our 6999. Each additional step matters. Profile where time is spent.
+1. **Speed optimization** — SOTA gets 7101 steps vs our 7072 (with QAT) / 6999 (without). Each step matters. Profile where time is spent.
+2. **Compression savings (~200KB)** — If we can save 200KB, STE QAT becomes viable (currently 7KB over). Ideas: smaller embedding, pruning near-zero weights, zstd dictionary.
 3. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
 4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
 5. **Sliding window stride tuning** — Currently stride=64. Is that optimal?
@@ -98,3 +98,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-25 | ema098_adaptive_gptq | 1.1233 | 16.81MB | **FAILED**: Both 10-clip and 5-clip over 16MB. 5-clip LARGER than 10-clip! |
 | 2026-03-25 | int5_mlp_ema098 | 1.1427 | 13.78MB | **REGRESSED**: Int5 MLP quant gap devastating (+0.019 BPB). |
 | 2026-03-25 | working_qat_fix | 1.1236 | 16.25MB | **FAILED**: QAT reduced quant gap 34% but artifact +0.46MB over 16MB. |
+| 2026-03-25 | ste_qat_in_forward | 1.1233 | 16.01MB | **FAILED**: STE QAT in forward (SOTA approach). Only +0.22MB over vs +0.46MB, but still 7KB over 16MB. |

@@ -30,3 +30,4 @@
 | 2026-03-25 19:02 | working_qat_fix (FAILED) | 0.0 min | $0.00 | $112.23 |
 | 2026-03-25 19:13 | working_qat_fix (FAILED) | 5.4 min | $1.95 | $114.18 |
 | 2026-03-25 19:33 | working_qat_fix | 20.0 min | $7.19 | $121.37 |
+| 2026-03-25 20:12 | ste_qat_in_forward | 19.8 min | $7.10 | $128.47 |
