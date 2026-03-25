@@ -88,21 +88,22 @@ while true; do
     echo "=== Run #${run_count} at $(date) on commit ${COMMIT} ===" | tee -a "$LOGFILE"
 
     # Run Claude with full transcript capture
-    # --output-format json captures the full conversation
-    # We also tee stderr to the log for any errors
+    # --output-format stream-json streams events line-by-line to stdout in real-time
+    # tee saves the stream to the transcript file while also showing it live
     if claude --dangerously-skip-permissions \
               -p "$(cat "$AGENT_PROMPT")" \
               --model claude-opus-4-6 \
-              --output-format json \
+              --output-format stream-json \
+              --verbose \
               2>> "$LOGFILE" \
-              > "$TRANSCRIPT"; then
+              | tee "$TRANSCRIPT"; then
         failure_count=0
         echo "=== Run #${run_count} completed successfully at $(date) ===" | tee -a "$LOGFILE"
 
         # Extract a summary from the JSON transcript for the log
         if command -v jq &>/dev/null && [ -f "$TRANSCRIPT" ]; then
             # Get the last assistant message as a quick summary
-            jq -r '.[] | select(.type == "assistant") | .message // empty' "$TRANSCRIPT" 2>/dev/null | tail -20 >> "$LOGFILE" || true
+            jq -r 'select(.type == "assistant") | .message // empty' "$TRANSCRIPT" 2>/dev/null | tail -20 >> "$LOGFILE" || true
         fi
     else
         failure_count=$((failure_count + 1))

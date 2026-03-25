@@ -8,7 +8,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Architecture
 
-- [ ] **Depth recurrence / weight sharing** — Share weights across layer groups to get more "virtual layers" in the same parameter budget. The challenge explicitly suggests this. Could allow 20+ effective layers in the budget of 11.
+- [x] **Depth recurrence / weight sharing** — TRIED: shared attn+MLP weights between layers 7-10 and 3-6. RESULT: **+0.035 BPB worse** (1.159 vs 1.124). Model too small for weight sharing; every unique param matters. Gives 3.6% more steps but 35% fewer unique params is devastating.
 - [ ] **Mixture of Experts (MoE)** — Sparse MLP with 2-4 experts, top-1 routing. More capacity per parameter. Need to ensure it quantizes well.
 - [ ] **Linear attention variants** — Replace softmax attention in some layers with linear attention for efficiency. Could allow more layers or longer context.
 - [ ] **Cross-layer attention / dense connections** — Reuse KV from earlier layers. More information flow without more parameters.
@@ -54,11 +54,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Depth recurrence / weight sharing** — Most promising novel technique. Share weights across layer groups to get 20+ effective layers in 11L parameter budget. High potential, moderate risk.
-2. **Reduce per-step time** — Currently 87ms/step vs SOTA's 85ms. The FA3 fallback code might slow torch.compile. Stripping it could give ~100 more steps.
-3. **Increase training tokens** — Consider larger batch size or longer sequences during warmdown phase.
-4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter.
-5. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
+1. **Reduce per-step time** — Currently 87ms/step vs SOTA's 85ms. Remove redundant zero_grad, optimize compilation. Even 2ms/step = ~150 more steps.
+2. **Hyperparameter tuning** — Warmdown iters (try 3800), SWA frequency (every 25 vs 50), LR schedule tweaks.
+3. **Better GPTQ quantization** — More clip percentile candidates (10 instead of 5), or full column-wise GPTQ with calibration data.
+4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
+5. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. But increases artifact size.
 
 ## Results Log
 
@@ -67,3 +67,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-24 | sota_baseline_v4 | 1.1282 | 17.04MB (OVER) | First working run, no zstd |
 | 2026-03-24 | infra_fix_v2 | 1.1233 | 16.34MB (OVER) | FA3+zstd working, ZIP format too big |
 | 2026-03-24 | legacy_format | 1.1237 | 15.96MB | First valid submission! Legacy torch.save |
+| 2026-03-25 | depth_recurrence_512d | 1.1591 | 10.69MB | **REGRESSED**: weight sharing -0.035 BPB. Model too small for sharing. |

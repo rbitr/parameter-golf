@@ -1,2 +1,0 @@
-Human: I currently can't see any logs in real time of what claude is doing, I would like to be able to look at stdout and know what is happening.
-

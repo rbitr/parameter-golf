@@ -96,8 +96,6 @@ class Hyperparameters:
     ve_enabled = bool(int(os.environ.get("VE_ENABLED", "1")))
     ve_dim = int(os.environ.get("VE_DIM", 128))
     ve_layers = os.environ.get("VE_LAYERS", "9,10")
-    depth_recurrence = bool(int(os.environ.get("DEPTH_RECURRENCE", "0")))
-    share_layers = os.environ.get("SHARE_LAYERS", "7:3,8:4,9:5,10:6")
 def zeropower_via_newtonschulz5(G: Tensor, steps: int = 10, eps: float = 1e-7) -> Tensor:
     a, b, c = (3.4445, -4.7750, 2.0315)
     X = G.bfloat16()
@@ -672,8 +670,6 @@ class GPT(nn.Module):
         ve_enabled: bool = False,
         ve_dim: int = 128,
         ve_layers: str = "9,10",
-        depth_recurrence: bool = False,
-        share_layers: str = "",
     ):
         super().__init__()
         self._ve_target_dim = num_kv_heads * (model_dim // num_heads)  # kv_dim for value projection
@@ -736,15 +732,6 @@ class GPT(nn.Module):
             for i in range(max(0, num_layers - xsa_last_n), num_layers):
                 self.blocks[i].attn.use_xsa = True
         self._init_weights()
-        # Depth recurrence: share heavy weights between layer pairs
-        self._share_map: dict[int, int] = {}
-        if depth_recurrence and share_layers:
-            for pair in share_layers.split(","):
-                pair = pair.strip()
-                if ":" in pair:
-                    tgt, src = int(pair.split(":")[0]), int(pair.split(":")[1])
-                    self._share_map[tgt] = src
-            self._apply_weight_sharing()
     def _init_weights(self) -> None:
         if self.tie_embeddings:
             nn.init.normal_(self.tok_emb.weight, mean=0.0, std=self.tied_embed_init_std)
@@ -758,19 +745,6 @@ class GPT(nn.Module):
                     if ".proj." in name or name.endswith(".proj"):
                         with torch.no_grad():
                             module.weight.mul_(1.0 / math.sqrt(2 * num_layers))
-    def _apply_weight_sharing(self) -> None:
-        """Share heavy weight tensors (attn Q/K/V/O + MLP up/down) between layer pairs."""
-        for tgt, src in self._share_map.items():
-            src_block = self.blocks[src]
-            tgt_block = self.blocks[tgt]
-            # Share attention projection weights (but not q_gain or other small params)
-            tgt_block.attn.c_q.weight = src_block.attn.c_q.weight
-            tgt_block.attn.c_k.weight = src_block.attn.c_k.weight
-            tgt_block.attn.c_v.weight = src_block.attn.c_v.weight
-            tgt_block.attn.proj.weight = src_block.attn.proj.weight
-            # Share MLP weights
-            tgt_block.mlp.fc.weight = src_block.mlp.fc.weight
-            tgt_block.mlp.proj.weight = src_block.mlp.proj.weight
     def _get_ve(self, layer_idx: int, input_ids: Tensor, ve_cache: dict | None = None) -> Tensor | None:
         """Get value embedding for a specific layer using shared table + per-layer scale."""
         if self.ve_shared is None or layer_idx not in self.ve_layer_indices:
@@ -958,15 +932,8 @@ def mixed_quantize_int6(state_dict: dict[str, Tensor], int6_cats: set[str]):
     late_k_layers = set(range(num_layers_total - 2, num_layers_total))
     result: dict[str, Tensor] = {}
     meta: dict[str, object] = {}
-    # Detect shared tensors (from depth recurrence weight sharing)
-    seen_data: dict[int, str] = {}  # data_ptr -> first key name
     for name, tensor in state_dict.items():
         t = tensor.detach().cpu().contiguous()
-        ptr = tensor.data_ptr()
-        if ptr in seen_data:
-            meta[name] = {"type": "shared", "source": seen_data[ptr]}
-            continue
-        seen_data[ptr] = name
         cat = _classify_param(name)
         if not t.is_floating_point() or t.numel() <= 65536:
             result[name] = t.to(torch.float16) if t.is_floating_point() else t
@@ -990,13 +957,10 @@ def mixed_quantize_int6(state_dict: dict[str, Tensor], int6_cats: set[str]):
 def dequantize_mixed_int6(result: dict[str, Tensor], meta: dict[str, object],
                           template_sd: dict[str, Tensor]) -> dict[str, Tensor]:
     out: dict[str, Tensor] = {}
-    # Two passes: first dequantize non-shared, then resolve shared refs
     for name, orig in template_sd.items():
         info = meta.get(name)
         if info is None:
             continue
-        if isinstance(info, dict) and info.get("type") == "shared":
-            continue  # handle in second pass
         orig_dtype = orig.dtype
         if info in ("passthrough", "passthrough_ctrl", "passthrough_fp16"):
             t = result[name]
@@ -1009,12 +973,6 @@ def dequantize_mixed_int6(result: dict[str, Tensor], meta: dict[str, object],
             out[name] = (q.float() * s.float().view(q.shape[0], *([1] * (q.ndim - 1)))).to(orig_dtype)
         else:
             out[name] = (q.float() * float(s.item())).to(orig_dtype)
-    # Second pass: resolve shared weight references
-    for name, orig in template_sd.items():
-        info = meta.get(name)
-        if isinstance(info, dict) and info.get("type") == "shared":
-            src_name = info["source"]
-            out[name] = out[src_name]
     return out
 def main() -> None:
     global zeropower_via_newtonschulz5
@@ -1114,8 +1072,6 @@ def main() -> None:
         ve_enabled=args.ve_enabled,
         ve_dim=args.ve_dim,
         ve_layers=args.ve_layers,
-        depth_recurrence=args.depth_recurrence,
-        share_layers=args.share_layers,
     ).to(device).bfloat16()
     for module in base_model.modules():
         if isinstance(module, CastedLinear):
@@ -1187,11 +1143,8 @@ def main() -> None:
         )
         optimizers.insert(1, optimizer_head)
     n_params = sum(p.numel() for p in base_model.parameters())
-    n_unique_params = sum(t.numel() for t in {p.data_ptr(): p for p in base_model.parameters()}.values())
     mtp_params = sum(p.numel() for p in base_model.mtp_heads.parameters())
-    log0(f"model_params:{n_params} unique_params:{n_unique_params}")
-    if base_model._share_map:
-        log0(f"depth_recurrence:enabled share_map:{base_model._share_map}")
+    log0(f"model_params:{n_params}")
     log0(f"mtp_num_heads:{args.mtp_num_heads} mtp_loss_weight:{args.mtp_loss_weight} mtp_params:{mtp_params}")
     xsa_layers = [i for i, b in enumerate(base_model.blocks) if b.attn.use_xsa]
     log0(f"XSA:last_{args.xsa_last_n} active_layers:{xsa_layers}")
@@ -1379,17 +1332,10 @@ def main() -> None:
         code_bytes = len(code.encode("utf-8"))
         log0(f"Serialized model: {model_bytes} bytes")
         log0(f"Code size: {code_bytes} bytes")
-    # Deduplicate shared tensors when copying to CPU (depth recurrence)
-    sd_cpu: dict[str, Tensor] = {}
-    _ptr_to_cpu: dict[int, Tensor] = {}
-    for k, v in export_sd.items():
-        ptr = v.data_ptr()
-        if ptr not in _ptr_to_cpu:
-            _ptr_to_cpu[ptr] = v.detach().cpu()
-        sd_cpu[k] = _ptr_to_cpu[ptr]
+    sd_cpu = {k: v.detach().cpu() for k, v in export_sd.items()}
     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"})
     quant_buf = io.BytesIO()
-    torch.save({"w": quant_result, "m": quant_meta}, quant_buf, _use_new_zipfile_serialization=False)
+    torch.save({"w": quant_result, "m": quant_meta}, quant_buf)
     quant_raw = quant_buf.getvalue()
     if _COMPRESSOR == "zstd":
         quant_blob = zstandard.ZstdCompressor(level=22).compress(quant_raw)
@@ -1428,7 +1374,6 @@ def main() -> None:
         xsa_last_n=args.xsa_last_n,  # must match training model
         rope_dims=args.rope_dims, ln_scale=args.ln_scale, dtg=args.dtg_enabled,
         ve_enabled=args.ve_enabled, ve_dim=args.ve_dim, ve_layers=args.ve_layers,
-        depth_recurrence=args.depth_recurrence, share_layers=args.share_layers,
     ).to(device).bfloat16()
     for m in eval_model.modules():
         if isinstance(m, CastedLinear):

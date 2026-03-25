@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.95701436,
+  "val_bpb": 1.1590572,
+  "artifact_size_bytes": 10687917,
+  "train_time_ms": 600051,
+  "steps": 7146,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "depth_recurrence_512d",
+  "experiment": "20260325_123457_depth_recurrence_512d",
+  "pod_id": "cm5y7cy8r1tjkf",
+  "elapsed_min": 18.9,
+  "estimated_cost": 6.78
+}

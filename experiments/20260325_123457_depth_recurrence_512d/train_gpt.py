@@ -96,7 +96,7 @@ class Hyperparameters:
     ve_enabled = bool(int(os.environ.get("VE_ENABLED", "1")))
     ve_dim = int(os.environ.get("VE_DIM", 128))
     ve_layers = os.environ.get("VE_LAYERS", "9,10")
-    depth_recurrence = bool(int(os.environ.get("DEPTH_RECURRENCE", "0")))
+    depth_recurrence = bool(int(os.environ.get("DEPTH_RECURRENCE", "1")))
     share_layers = os.environ.get("SHARE_LAYERS", "7:3,8:4,9:5,10:6")
 def zeropower_via_newtonschulz5(G: Tensor, steps: int = 10, eps: float = 1e-7) -> Tensor:
     a, b, c = (3.4445, -4.7750, 2.0315)
