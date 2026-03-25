@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89674026,
+  "val_bpb": 1.1233594,
+  "artifact_size_bytes": 16280441,
+  "train_time_ms": 600055,
+  "steps": 6994,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "warmdown3800",
+  "experiment": "20260325_150102_warmdown3800",
+  "pod_id": "da1voeuqh4u3nj",
+  "elapsed_min": 19.8,
+  "estimated_cost": 7.11
+}

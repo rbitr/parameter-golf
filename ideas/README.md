@@ -20,6 +20,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 ## Training
 
 - [ ] **Curriculum learning** — Start with shorter sequences, ramp up to 2048. May help early training efficiency.
+- [x] **Warmdown iters tuning** — TRIED: 3500→3800. RESULT: **+0.0002 BPB worse**, artifact OVER 16MB. 3500 is near-optimal; 54% warmdown is too much.
 - [ ] **Alternative LR schedules** — WSD (warmup-stable-decay), cyclic, etc. Warmdown is standard but is it optimal?
 - [ ] **Larger batch size** — If training is compute-bound, larger batches could help with 8 GPUs.
 - [ ] **Gradient accumulation tweaks** — Trade off batch size vs sequence length.
@@ -69,3 +70,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-24 | legacy_format | 1.1237 | 15.96MB | First valid submission! Legacy torch.save |
 | 2026-03-25 | depth_recurrence_512d | 1.1591 | 10.69MB | **REGRESSED**: weight sharing -0.035 BPB. Model too small for sharing. |
 | 2026-03-25 | speed_cleanup_gptq10 | 1.1232 | 15.79MB | **NEW BEST**: +101 steps from cleanup, 10 GPTQ clips. -0.0005 BPB. |
+| 2026-03-25 | warmdown3800 | 1.1234 | 16.28MB | **REGRESSED**: +0.0002 BPB worse, artifact OVER 16MB. 3500 is optimal. |
