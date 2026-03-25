@@ -34,17 +34,19 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 - [ ] **BitNet / ternary weights** — Train with ternary or binary weights from scratch. Zero quantization gap.
 - [x] **Mixed precision per-layer (int5 MLP)** — TRIED: int5 for MLPs, int6 for attention. RESULT: **+0.019 BPB worse**. Int5 quantization gap is devastating. Not viable at this model size.
-- [x] **Fix dead-coded QAT** — TRIED twice: (1) weight-replacement QAT: +0.46MB over. (2) STE QAT in forward (matching SOTA): +0.22MB over (16.007MB). STE is much better but still over 16MB. Need ~200KB savings elsewhere to enable QAT.
+- [x] **Fix dead-coded QAT** — TRIED 4 times: STE QAT gives best BPB (1.1230) but artifact always 80-470KB over 16MB. Our weights compress ~500KB worse than SOTA's despite same config. Post-quant pruning (zeroing ±1 values) saves 1.82MB but costs 0.02 BPB. QAT is blocked unless we solve the compression gap.
 - [-] **QAT from the start** — Abandoned: too expensive (model can't learn with full quantization noise from step 0).
 - [-] **Int4/Int5 for some tensors** — Abandoned: int5 MLP experiment showed quantization error is too large.
+- [-] **Aggressive post-quant pruning** — Abandoned: zeroing all ±1 quantized values saves 1.82MB but destroys BPB (+0.02). Need magnitude-aware pruning but code complexity is high.
 - [ ] **Better compression** — zstd-22 vs brotli vs custom schemes. The compressor matters.
 - [ ] **Structured sparsity** — 2:4 or 4:8 structured sparsity for better compression ratios.
+- [ ] **Magnitude-aware pruning** — Prune by |q * scale| instead of |q|. Could save 100KB with minimal BPB impact.
 - [ ] **Vocabulary size optimization** — Larger vocab = fewer tokens = potentially better BPB, but more embedding params. Find the sweet spot.
 - [ ] **Knowledge distillation into quantized model** — Train large, distill into the 16MB target.
 
 ## Evaluation
 
-- [ ] **Sliding window stride optimization** — Current SOTA uses stride=64. Is that optimal?
+- [~] **Sliding window stride optimization** — stride=32 prepared, waiting for RunPod availability. Expected: free 0.0001-0.0002 BPB improvement.
 - [ ] **Test-time training (TTT)** — LoRA-based TTT is already on the leaderboard at 1.19. Could be combined with better base models.
 - [ ] **Longer eval context** — Evaluate with context > training length via position extrapolation.
 - [ ] **Ensembling within 16MB** — Multiple tiny models that vote? Probably not enough budget.
@@ -58,9 +60,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Speed optimization** — SOTA gets 7101 steps vs our 7072 (with QAT) / 6999 (without). Each step matters. Profile where time is spent.
-2. **Compression savings (~200KB)** — If we can save 200KB, STE QAT becomes viable (currently 7KB over). Ideas: smaller embedding, pruning near-zero weights, zstd dictionary.
-3. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
+1. **Eval stride=32** — READY TO RUN. Free BPB improvement with no training changes. Waiting for RunPod availability.
+2. **Speed optimization** — SOTA gets 7101 steps vs our ~7000 (0.6ms/step slower). Profile where time is spent. FA3 import guard is one suspect.
+3. **Magnitude-aware pruning** — If QAT + targeted pruning (by |q*scale|) can save ~100KB, QAT becomes viable. QAT gives 0.0002 BPB improvement.
+4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
+5. **Label smoothing** — Small epsilon (0.01-0.05) for better generalization. Low risk.
 4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
 5. **Sliding window stride tuning** — Currently stride=64. Is that optimal?
 
@@ -99,3 +103,6 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-25 | int5_mlp_ema098 | 1.1427 | 13.78MB | **REGRESSED**: Int5 MLP quant gap devastating (+0.019 BPB). |
 | 2026-03-25 | working_qat_fix | 1.1236 | 16.25MB | **FAILED**: QAT reduced quant gap 34% but artifact +0.46MB over 16MB. |
 | 2026-03-25 | ste_qat_in_forward | 1.1233 | 16.01MB | **FAILED**: STE QAT in forward (SOTA approach). Only +0.22MB over vs +0.46MB, but still 7KB over 16MB. |
+| 2026-03-25 | match_sota_qat_cleanup | 1.1230 | 16.08MB | **BEST BPB** but artifact 80KB over. QAT + 5 clips + code cleanup. |
+| 2026-03-25 | qat_10clip_codeclean | 1.1236 | 16.14MB | **FAILED**: 10 clips + QAT worse than 5 clips + QAT. |
+| 2026-03-25 | qat_prune_fallback | 1.1427 | 14.65MB | **REGRESSED**: Pruning all ±1 quant values saves 1.82MB but costs 0.02 BPB. Way too aggressive. |

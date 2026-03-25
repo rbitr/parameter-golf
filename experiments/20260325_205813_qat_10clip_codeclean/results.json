@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89715484,
+  "val_bpb": 1.12360493,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600023,
+  "steps": 7037,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "qat_10clip_codeclean",
+  "experiment": "20260325_205813_qat_10clip_codeclean",
+  "pod_id": "dpzr2ojwz2zdsu",
+  "elapsed_min": 19.6,
+  "estimated_cost": 7.02
+}

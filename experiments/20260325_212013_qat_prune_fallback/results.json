@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.92935315,
+  "val_bpb": 1.14267463,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600019,
+  "steps": 7077,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "qat_prune_fallback",
+  "experiment": "20260325_212013_qat_prune_fallback",
+  "pod_id": "hkq5gynw9lv8xe",
+  "elapsed_min": 19.4,
+  "estimated_cost": 6.95
+}

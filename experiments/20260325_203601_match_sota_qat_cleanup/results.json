@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89612323,
+  "val_bpb": 1.12299396,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600005,
+  "steps": 7048,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "match_sota_qat_cleanup",
+  "experiment": "20260325_203601_match_sota_qat_cleanup",
+  "pod_id": "580jmt6a0m4a97",
+  "elapsed_min": 18.0,
+  "estimated_cost": 6.46
+}

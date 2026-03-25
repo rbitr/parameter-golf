@@ -31,3 +31,10 @@
 | 2026-03-25 19:13 | working_qat_fix (FAILED) | 5.4 min | $1.95 | $114.18 |
 | 2026-03-25 19:33 | working_qat_fix | 20.0 min | $7.19 | $121.37 |
 | 2026-03-25 20:12 | ste_qat_in_forward | 19.8 min | $7.10 | $128.47 |
+| 2026-03-25 20:54 | match_sota_qat_cleanup | 18.0 min | $6.46 | $134.93 |
+| 2026-03-25 20:57 | qat_10clip_codeclean (FAILED) | 0.0 min | $0.00 | $134.93 |
+| 2026-03-25 21:17 | qat_10clip_codeclean | 19.6 min | $7.02 | $141.95 |
+| 2026-03-25 21:39 | qat_prune_fallback | 19.4 min | $6.95 | $148.90 |
+| 2026-03-25 21:43 | stride32_codeclean (FAILED) | 0.0 min | $0.01 | $148.91 |
+| 2026-03-25 21:44 | stride32_codeclean (FAILED) | 0.0 min | $0.00 | $148.91 |
+| 2026-03-25 21:46 | stride32_codeclean (FAILED) | 0.0 min | $0.00 | $148.91 |
