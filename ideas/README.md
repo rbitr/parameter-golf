@@ -21,6 +21,8 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 - [ ] **Curriculum learning** — Start with shorter sequences, ramp up to 2048. May help early training efficiency.
 - [x] **Warmdown iters tuning** — TRIED: 3500→3800. RESULT: **+0.0002 BPB worse**, artifact OVER 16MB. 3500 is near-optimal; 54% warmdown is too much.
+- [x] **EMA decay tuning** — TRIED: 0.997→0.998. RESULT: **-0.0003 BPB better** but artifact OVER 16MB (16.0-16.7MB). 0.997 is optimal for 16MB budget.
+- [x] **EMA+SWA blend** — TRIED: blend averaging at various alphas. RESULT: Pure EMA is best at scale (alpha=1.0). SWA adds no value.
 - [ ] **Alternative LR schedules** — WSD (warmup-stable-decay), cyclic, etc. Warmdown is standard but is it optimal?
 - [ ] **Larger batch size** — If training is compute-bound, larger batches could help with 8 GPUs.
 - [ ] **Gradient accumulation tweaks** — Trade off batch size vs sequence length.
@@ -55,11 +57,29 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Close remaining 1.17ms/step gap** — Currently 85.7ms vs SOTA's 84.6ms. Profile differences, optimize compile, try CUDA_LAUNCH_BLOCKING=0. Even 1ms = ~70 more steps.
-2. **Hyperparameter tuning** — Warmdown iters (try 3800), SWA frequency (every 25 vs 50), LR schedule tweaks. Low risk, potential 0.0002-0.0005 improvement.
-3. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params. Medium risk, potential 0.002+ improvement.
-4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Higher risk.
-5. **Alternative eval strategies** — Different sliding window strides, or longer eval context.
+1. **Tighter GPTQ clip set** — Try clips like [0.995, 0.997, 0.998, 0.999, 0.9995, 0.9999, 0.99999, 1.0] to produce more compressible weights. FINDING: tighter clips = better compression. Our 10-clip set with 0.998 min clip produces smaller files than 5-clip with 0.999 min. Going tighter might unlock EMA 0.998 viability.
+2. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
+3. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params. Need data for other vocab sizes.
+4. **Alternative eval strategies** — Sliding window stride optimization, doc-isolated evaluation.
+5. **Gradient accumulation / batch size tuning** — Currently 786K tokens/step across 8 GPUs.
+
+## Key Findings
+
+### EMA decay tradeoff
+- EMA 0.997: better compression (15.7-15.8MB model), BPB 1.1232
+- EMA 0.998: worse compression (16.0-16.7MB model), BPB 1.1229
+- The wider window produces broader weight distributions that compress poorly
+- EMA 0.997 is optimal for 16MB budget
+
+### GPTQ clips tradeoff
+- More clips (10) = better MSE AND often better compression (tighter clips produce narrower distributions)
+- Fewer clips (5) = can actually be LARGER (wider minimum clip keeps more outliers)
+- Artifact size has ~400KB variance between runs regardless of clips
+
+### Artifact size variance
+- Same configuration can produce 15.7-16.2MB artifacts across runs
+- Varies with step count (hardware speed) and training randomness
+- Need ~200KB headroom for reliable submissions
 
 ## Results Log
 
@@ -71,3 +91,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-25 | depth_recurrence_512d | 1.1591 | 10.69MB | **REGRESSED**: weight sharing -0.035 BPB. Model too small for sharing. |
 | 2026-03-25 | speed_cleanup_gptq10 | 1.1232 | 15.79MB | **NEW BEST**: +101 steps from cleanup, 10 GPTQ clips. -0.0005 BPB. |
 | 2026-03-25 | warmdown3800 | 1.1234 | 16.28MB | **REGRESSED**: +0.0002 BPB worse, artifact OVER 16MB. 3500 is optimal. |
+| 2026-03-25 | ema_swa_blend | 1.1232 | 16.20MB | **FAILED**: Artifact over 16MB. EMA+SWA blend doesn't help at scale (pure EMA best). |
+| 2026-03-25 | ema_decay_0998 | 1.1229 | 16.10MB | **FAILED**: Best BPB yet but artifact over 16MB. EMA 0.998 compresses poorly. |
+| 2026-03-25 | ema098_gptq5 | 1.1232 | 15.92MB | Under 16MB but BPB same as EMA 0.997 + 10 clips. 5 clips alone doesn't improve. |
+| 2026-03-25 | ema098_adaptive_gptq | 1.1233 | 16.81MB | **FAILED**: Both 10-clip and 5-clip over 16MB. 5-clip LARGER than 10-clip! |

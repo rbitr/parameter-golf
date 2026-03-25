@@ -25,9 +25,8 @@ from torch import Tensor, nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 try:
     from flash_attn_interface import flash_attn_func as flash_attn_3_func
-    _HAS_FA3 = True
 except ImportError:
-    _HAS_FA3 = False
+    flash_attn_3_func = None
 class Hyperparameters:
     data_path = os.environ.get("DATA_PATH", "./data/datasets/fineweb10B_sp1024")
     train_files = os.path.join(data_path, "fineweb_train_*.bin")
@@ -73,8 +72,8 @@ class Hyperparameters:
     mtp_num_heads = int(os.environ.get("MTP_NUM_HEADS", 0))
     mtp_loss_weight = float(os.environ.get("MTP_LOSS_WEIGHT", 0.2))
     muon_beta2 = float(os.environ.get("MUON_BETA2", 0.95))
-    swa_enabled = bool(int(os.environ.get("SWA_ENABLED", "1")))
-    swa_every = int(os.environ.get("SWA_EVERY", 50))  # tighter: collect more recent checkpoints
+    swa_enabled = bool(int(os.environ.get("SWA_ENABLED", "0")))  # disabled: proven no benefit over EMA
+    swa_every = int(os.environ.get("SWA_EVERY", 50))
     muon_wd = float(os.environ.get("MUON_WD", 0.04))
     adam_wd = float(os.environ.get("ADAM_WD", 0.04))
     qat_enabled = bool(int(os.environ.get("QAT_ENABLED", "0")))
@@ -528,7 +527,7 @@ class CausalSelfAttention(nn.Module):
         q = apply_rotary_emb(q, cos, sin, self.rope_dims)
         k = apply_rotary_emb(k, cos, sin, self.rope_dims)
         q = q * self.q_gain.to(dtype=q.dtype)[None, None, :, None]
-        if _HAS_FA3:
+        if flash_attn_3_func is not None:
             y = flash_attn_3_func(q, k, v, causal=True)
         else:
             y = F.scaled_dot_product_attention(
@@ -892,11 +891,15 @@ def _classify_param(name: str) -> str:
     if ".attn." in name or (".proj." in name and ".mlp." not in name):
         return "attn"
     return "other"
-def quantize_int6_per_row(t: Tensor, clip_range: int = 31) -> tuple[Tensor, Tensor]:
+GPTQ_CLIPS_10 = [0.998, 0.999, 0.9993, 0.9995, 0.9997, 0.9999, 0.99995, 0.99999, 0.999999, 1.0]
+GPTQ_CLIPS_5 = [0.9990, 0.9995, 0.9999, 0.99999, 1.0]
+def quantize_int6_per_row(t: Tensor, clip_range: int = 31, clips: list[float] | None = None) -> tuple[Tensor, Tensor]:
     t32 = t.float()
+    if clips is None:
+        clips = GPTQ_CLIPS_10
     if t32.ndim == 2:
         best_q, best_s, best_err = None, None, float('inf')
-        for pct in [0.998, 0.999, 0.9993, 0.9995, 0.9997, 0.9999, 0.99995, 0.99999, 0.999999, 1.0]:
+        for pct in clips:
             if pct < 1.0:
                 row_clip = torch.quantile(t32.abs(), pct, dim=1)
             else:
@@ -912,7 +915,7 @@ def quantize_int6_per_row(t: Tensor, clip_range: int = 31) -> tuple[Tensor, Tens
     scale = torch.tensor(amax / clip_range if amax > 0 else 1.0, dtype=torch.float16)
     q = torch.clamp(torch.round(t32 / scale.float()), -clip_range, clip_range).to(torch.int8)
     return q, scale
-def mixed_quantize_int6(state_dict: dict[str, Tensor], int6_cats: set[str]):
+def mixed_quantize_int6(state_dict: dict[str, Tensor], int6_cats: set[str], clips: list[float] | None = None):
     num_layers_total = max(
         (int(k.split(".")[1]) for k in state_dict if k.startswith("blocks.")),
         default=0,
@@ -932,7 +935,7 @@ def mixed_quantize_int6(state_dict: dict[str, Tensor], int6_cats: set[str]):
             meta[name] = "passthrough_ctrl"
             continue
         if cat in int6_cats and t.ndim >= 1:
-            q, s = quantize_int6_per_row(t)
+            q, s = quantize_int6_per_row(t, clips=clips)
             result[name + ".q"] = q
             result[name + ".scale"] = s
             meta[name] = {"type": "int6"}
@@ -1321,19 +1324,27 @@ def main() -> None:
         log0(f"Serialized model: {model_bytes} bytes")
         log0(f"Code size: {code_bytes} bytes")
     sd_cpu = {k: v.detach().cpu() for k, v in export_sd.items()}
-    quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"})
-    quant_buf = io.BytesIO()
-    torch.save({"w": quant_result, "m": quant_meta}, quant_buf, _use_new_zipfile_serialization=False)
-    quant_raw = quant_buf.getvalue()
-    quant_blob = zstandard.ZstdCompressor(level=22).compress(quant_raw) if _COMPRESSOR == "zstd" else zlib.compress(quant_raw, 9)
+    code_bytes = len(code.encode("utf-8"))
+    max_artifact = 16_000_000
+    # Try 10 GPTQ clips first (best quality), fall back to 5 if artifact too large
+    for clip_set_name, clip_set in [("10-clip", GPTQ_CLIPS_10), ("5-clip", GPTQ_CLIPS_5)]:
+        quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, clips=clip_set)
+        quant_buf = io.BytesIO()
+        torch.save({"w": quant_result, "m": quant_meta}, quant_buf, _use_new_zipfile_serialization=False)
+        quant_raw = quant_buf.getvalue()
+        quant_blob = zstandard.ZstdCompressor(level=22).compress(quant_raw) if _COMPRESSOR == "zstd" else zlib.compress(quant_raw, 9)
+        quant_file_bytes = len(quant_blob)
+        total_size = quant_file_bytes + code_bytes
+        log0(f"GPTQ {clip_set_name}: model={quant_file_bytes} code={code_bytes} total={total_size} limit={max_artifact}")
+        if total_size <= max_artifact:
+            break
+        log0(f"GPTQ {clip_set_name}: OVER LIMIT, trying fewer clips...")
     if master_process:
         with open("final_model.int6.ptz", "wb") as f:
             f.write(quant_blob)
-        quant_file_bytes = len(quant_blob)
-        code_bytes = len(code.encode("utf-8"))
         log0(f"Serialized model int6+{_COMPRESSOR}: {quant_file_bytes} bytes")
-        log0(f"Total submission size int6+{_COMPRESSOR}: {quant_file_bytes + code_bytes} bytes")
-        log0(f"Total submission size int8+zlib: {quant_file_bytes + code_bytes} bytes")
+        log0(f"Total submission size int6+{_COMPRESSOR}: {total_size} bytes")
+        log0(f"Total submission size int8+zlib: {total_size} bytes")
     if distributed:
         dist.barrier()
     with open("final_model.int6.ptz", "rb") as f:

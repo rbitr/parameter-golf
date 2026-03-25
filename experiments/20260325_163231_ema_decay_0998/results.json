@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89604046,
+  "val_bpb": 1.12294493,
+  "artifact_size_bytes": 16101984,
+  "train_time_ms": 600064,
+  "steps": 7092,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ema_decay_0998",
+  "experiment": "20260325_163231_ema_decay_0998",
+  "pod_id": "uuwrouuarnblw5",
+  "elapsed_min": 18.5,
+  "estimated_cost": 6.63
+}

@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89651569,
+  "val_bpb": 1.12322639,
+  "artifact_size_bytes": 15924810,
+  "train_time_ms": 600024,
+  "steps": 7000,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ema098_gptq5",
+  "experiment": "20260325_165326_ema098_gptq5",
+  "pod_id": "ywujbu6zibp3wa",
+  "elapsed_min": 18.8,
+  "estimated_cost": 6.73
+}

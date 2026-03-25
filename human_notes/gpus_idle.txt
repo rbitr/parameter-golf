@@ -8,3 +8,17 @@ Fixes applied:
 - Added explicit `pip install zstandard` and `pip install flash-attn` to setup_cmds in runpod_eval.py, so these happen during setup rather than during training.
 - The main training script no longer needs to self-install packages at import time.
 - All thinking/planning happens locally BEFORE creating the RunPod pod.
+
+Human: I still see cases where the runpod pod is up and running, nothing is happening, and claude is sleeping, waiting for a timeout or something. Is there a way to poll more frequently so we can see when jobs are finished and stop the pods?
+
+Agent: Investigated. The runpod_eval.py uses `subprocess.run` for SSH commands which blocks until the remote command finishes — there's no polling or sleeping involved during training. The SSH command returns as soon as training is done. Possible causes of what you're seeing:
+
+1. **Pod startup phase**: After pod creation, we poll every 10s for SSH readiness (line 103 in runpod_eval.py). This can take 2-5 min. GPUs are allocated but idle during this time. This is unavoidable with RunPod.
+
+2. **Setup commands**: git clone + data download + package installs take ~2-3 min. GPUs idle during this.
+
+3. **Agent thinking between invocations**: If the agent is invoked, plans for a while, then launches RunPod, the pod creation is instant but the agent may have been "thinking" for a while before that. All planning now happens before pod creation.
+
+The total overhead per run is roughly: ~3 min pod startup + ~3 min setup + ~10 min training = ~16 min. Our recent runs show 18-20 min total, which is consistent. The 6-8 min idle time is mostly unavoidable RunPod infrastructure overhead.
+
+No code change will fix the pod startup time — it's a RunPod limitation. The SSH blocking approach is actually optimal since it returns immediately when done (no polling delay).

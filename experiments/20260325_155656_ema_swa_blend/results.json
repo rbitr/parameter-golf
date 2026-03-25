@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89643728,
+  "val_bpb": 1.12317995,
+  "artifact_size_bytes": 16201243,
+  "train_time_ms": 600005,
+  "steps": 7008,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ema_swa_blend",
+  "experiment": "20260325_155656_ema_swa_blend",
+  "pod_id": "2svfiyoezegssz",
+  "elapsed_min": 19.1,
+  "estimated_cost": 6.85
+}
