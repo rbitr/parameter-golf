@@ -34,7 +34,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 - [ ] **BitNet / ternary weights** — Train with ternary or binary weights from scratch. Zero quantization gap.
 - [x] **Mixed precision per-layer (int5 MLP)** — TRIED: int5 for MLPs, int6 for attention. RESULT: **+0.019 BPB worse**. Int5 quantization gap is devastating. Not viable at this model size.
-- [x] **Fix dead-coded QAT** — TRIED 4 times: STE QAT gives best BPB (1.1230) but artifact always 80-470KB over 16MB. Our weights compress ~500KB worse than SOTA's despite same config. Post-quant pruning (zeroing ±1 values) saves 1.82MB but costs 0.02 BPB. QAT is blocked unless we solve the compression gap.
+- [x] **Fix dead-coded QAT** — TRIED 5 times: QAT + 5 clips gives best BPB (1.1230) but artifact 80KB over 16MB. QAT + 10 clips fits under 16MB (15.93MB) but BPB is 1.1234 (worse than no-QAT best 1.1232). The GPTQ clip count interacts with QAT. Need to try 7-8 clips or find other ways to save ~100KB.
 - [-] **QAT from the start** — Abandoned: too expensive (model can't learn with full quantization noise from step 0).
 - [-] **Int4/Int5 for some tensors** — Abandoned: int5 MLP experiment showed quantization error is too large.
 - [-] **Aggressive post-quant pruning** — Abandoned: zeroing all ±1 quantized values saves 1.82MB but destroys BPB (+0.02). Need magnitude-aware pruning but code complexity is high.
@@ -46,7 +46,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Evaluation
 
-- [~] **Sliding window stride optimization** — stride=32 prepared, waiting for RunPod availability. Expected: free 0.0001-0.0002 BPB improvement.
+- [x] **Sliding window stride optimization** — TRIED stride=32 vs stride=64. RESULT: Only 0.00003 BPB difference. Not worth the 2x eval time. Stride=64 is optimal.
 - [ ] **Test-time training (TTT)** — LoRA-based TTT is already on the leaderboard at 1.19. Could be combined with better base models.
 - [ ] **Longer eval context** — Evaluate with context > training length via position extrapolation.
 - [ ] **Ensembling within 16MB** — Multiple tiny models that vote? Probably not enough budget.
@@ -60,13 +60,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Eval stride=32** — READY TO RUN. Free BPB improvement with no training changes. Waiting for RunPod availability.
-2. **Speed optimization** — SOTA gets 7101 steps vs our ~7000 (0.6ms/step slower). Profile where time is spent. FA3 import guard is one suspect.
-3. **Magnitude-aware pruning** — If QAT + targeted pruning (by |q*scale|) can save ~100KB, QAT becomes viable. QAT gives 0.0002 BPB improvement.
+1. **QAT + 7-8 clips** — Middle ground: 5 clips gave best BPB (1.1230) but was over 16MB; 10 clips fit (15.93MB) but BPB was 1.1234. 7-8 clips might hit the sweet spot.
+2. **Speed optimization** — SOTA gets 7101 steps vs our ~7000. SOTA has SWA overhead but still faster. Profile where the 1ms/step gap comes from.
+3. **Label smoothing** — Small epsilon (0.01-0.05) for better generalization. Low risk.
 4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
-5. **Label smoothing** — Small epsilon (0.01-0.05) for better generalization. Low risk.
-4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
-5. **Sliding window stride tuning** — Currently stride=64. Is that optimal?
+5. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
 
 ## Key Findings
 
@@ -80,6 +78,17 @@ Evolving list of ideas to explore. Mark with status as you go:
 - More clips (10) = better MSE AND often better compression (tighter clips produce narrower distributions)
 - Fewer clips (5) = can actually be LARGER (wider minimum clip keeps more outliers)
 - Artifact size has ~400KB variance between runs regardless of clips
+
+### QAT + GPTQ clips interaction
+- QAT + 5 clips: 1.1230 BPB, 16.08MB (best BPB, over 16MB)
+- QAT + 10 clips: 1.1234 BPB, 15.93MB (fits, but worse BPB)
+- No QAT + 10 clips: 1.1232 BPB, 15.79MB (current best valid)
+- 10 clips may pick suboptimal clip points for QAT-trained weights
+- Try 7-8 clips as middle ground
+
+### Sliding window stride
+- stride=32 vs stride=64: only 0.00003 BPB difference
+- Not worth the 2x eval time. stride=64 is optimal.
 
 ### Artifact size variance
 - Same configuration can produce 15.7-16.2MB artifacts across runs
@@ -106,3 +115,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-25 | match_sota_qat_cleanup | 1.1230 | 16.08MB | **BEST BPB** but artifact 80KB over. QAT + 5 clips + code cleanup. |
 | 2026-03-25 | qat_10clip_codeclean | 1.1236 | 16.14MB | **FAILED**: 10 clips + QAT worse than 5 clips + QAT. |
 | 2026-03-25 | qat_prune_fallback | 1.1427 | 14.65MB | **REGRESSED**: Pruning all ±1 quant values saves 1.82MB but costs 0.02 BPB. Way too aggressive. |
+| 2026-03-25 | qat015_10clips_legacy | 1.1234 | 15.93MB | QAT + 10 clips fits under 16MB but BPB worse than best (1.1232). Stride=32 vs 64: negligible. |

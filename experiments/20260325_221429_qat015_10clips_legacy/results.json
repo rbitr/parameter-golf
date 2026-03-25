@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89679568,
+  "val_bpb": 1.12339222,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600065,
+  "steps": 7035,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "qat015_10clips_legacy",
+  "experiment": "20260325_221429_qat015_10clips_legacy",
+  "pod_id": "yn6mukvyn2ilfx",
+  "elapsed_min": 22.0,
+  "estimated_cost": 7.88
+}
