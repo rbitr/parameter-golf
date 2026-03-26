@@ -21,7 +21,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 - [ ] **Curriculum learning** — Start with shorter sequences, ramp up to 2048. May help early training efficiency.
 - [x] **Warmdown iters tuning** — TRIED: 3500→3800. RESULT: **+0.0002 BPB worse**, artifact OVER 16MB. 3500 is near-optimal; 54% warmdown is too much.
-- [x] **EMA decay tuning** — TRIED: 0.997→0.998. RESULT: **-0.0006 BPB better** (1.1226 vs 1.1232). Previously blocked by artifact size (zstd), unblocked by brotli compression. **NEW BEST**.
+- [x] **EMA decay tuning** — TRIED: 0.997→0.998: **-0.0006 BPB better** (1.1226). 0.999: **+0.0067 BPB worse** (1.1293). Optimum is 0.998. Not monotonic — 0.999 averages too much outdated history.
 - [x] **EMA+SWA blend** — TRIED: blend averaging at various alphas. RESULT: Pure EMA is best at scale (alpha=1.0). SWA adds no value AND costs ~1ms/step. Disabling SWA + EMA 0.998 = optimal.
 - [x] **Brotli compression** — TRIED: brotli quality 10 vs zstd-22. RESULT: **Saves 380-645KB** across all models. Key unlock for EMA 0.998. Decompression <1s.
 - [ ] **Alternative LR schedules** — WSD (warmup-stable-decay), cyclic, etc. Warmdown is standard but is it optimal?
@@ -61,11 +61,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **EMA 0.999** — Even broader averaging. With brotli, the wider distributions fit. Risk: may need more training steps.
-2. **Speed optimization** — Still 55 steps behind SOTA (7046 vs 7101). Profile ms/step gap. More steps = better BPB.
-3. **More GPTQ clips (15-20)** — 10→5 was worse; maybe 10→15 helps? Marginal but cheap to test.
-4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
-5. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
+1. **Speed optimization** — Still 55 steps behind SOTA (7046 vs 7101). Profile ms/step gap. More steps = better BPB.
+2. **More GPTQ clips (15-20)** — 10→5 was worse; maybe 10→15 helps? Marginal but cheap to test.
+3. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
+4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
+5. **QAT + brotli combo** — QAT+5clips gave 1.1230 but was 80KB over with zstd. Brotli saves 380-645KB. Might now fit!
 
 ## Key Findings
 
@@ -73,6 +73,8 @@ Evolving list of ideas to explore. Mark with status as you go:
 - EMA 0.997 + zstd: BPB 1.1232, 15.7-15.8MB (old best)
 - EMA 0.998 + zstd: BPB 1.1229, 16.0-16.7MB (over 16MB)
 - **EMA 0.998 + brotli: BPB 1.1226, 15.4-15.5MB (NEW BEST, under 16MB!)**
+- EMA 0.999 + brotli: BPB 1.1293 — WAY too broad, averages outdated history
+- Optimum is clearly 0.998. Don't go higher.
 - Brotli compression eliminates the EMA 0.998 size penalty
 - SWA disabled saves ~1ms/step → ~50 more training steps
 
@@ -131,3 +133,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-26 | brotli_ema098 | 1.1246 | 15.47MB | **REGRESSED**: Brotli works but SWA enabled → 6940 steps (too few). |
 | 2026-03-26 | brotli_ema098_noswa | **1.1226** | 15.47MB | **NEW BEST! BEATS SOTA!** Brotli-10 + EMA 0.998 + SWA disabled = 7046 steps. |
 | 2026-03-26 | 5clips_brotli_ema098 | 1.1236 | 15.47MB | **REGRESSED**: 5 clips worse than 10 clips (+0.001 BPB). 10 clips is optimal. |
+| 2026-03-26 | ema_decay_0999 | 1.1293 | — | **REGRESSED**: EMA 0.999 way too broad (+0.0067 BPB). Optimum is 0.998. |
