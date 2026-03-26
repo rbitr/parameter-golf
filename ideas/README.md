@@ -62,11 +62,12 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Earlier QAT (threshold 0.20-0.25)** — Current threshold 0.15 gives ~525 QAT steps. Lowering to 0.25 gives ~875 steps. More QAT training = better quant alignment. Low risk.
+1. ~~**Earlier QAT (threshold 0.20-0.25)**~~ — TRIED: 0.20 gave 1.1234, +0.0008 worse. More QAT hurts training quality AND doesn't reduce quant gap. 0.15 is optimal.
 2. **Speed optimization** — Hardware variance is 85.17-86.05 ms/step across runs. Getting consistently 85ms would add ~50 steps. Profile the gap.
 3. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
 4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
 5. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
+6. **Disable QAT entirely** — If 0.20 is worse and 0.15 is current, maybe 0.0 (no QAT) is even better? Low risk test.
 
 ## Key Findings
 
@@ -136,3 +137,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-26 | 5clips_brotli_ema098 | 1.1236 | 15.47MB | **REGRESSED**: 5 clips worse than 10 clips (+0.001 BPB). 10 clips is optimal. |
 | 2026-03-26 | ema_decay_0999 | 1.1293 | — | **REGRESSED**: EMA 0.999 way too broad (+0.0067 BPB). Optimum is 0.998. |
 | 2026-03-26 | 15clips_brotli_ema098 | 1.1234 | 15.48MB | **REGRESSED**: 15 clips no better than 10. Quant gap identical. Slower pod (86ms/step). |
+| 2026-03-26 | qat020_brotli_ema098 | 1.1234 | — | **REGRESSED**: Earlier QAT (0.20) hurts training quality AND quant gap. 0.15 is optimal. |
