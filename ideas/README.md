@@ -36,6 +36,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **BitNet / ternary weights** — Train with ternary or binary weights from scratch. Zero quantization gap.
 - [x] **Mixed precision per-layer (int5 MLP)** — TRIED: int5 for MLPs, int6 for attention. RESULT: **+0.019 BPB worse**. Int5 quantization gap is devastating. Not viable at this model size.
 - [x] **Fix dead-coded QAT** — TRIED 5 times: QAT + 5 clips gives best BPB (1.1230) but artifact 80KB over 16MB. QAT + 10 clips fits under 16MB (15.93MB) but BPB is 1.1234 (worse than no-QAT best 1.1232). The GPTQ clip count interacts with QAT. Need to try 7-8 clips or find other ways to save ~100KB.
+- [x] **More GPTQ clips (15)** — TRIED: 15 clips gives NO improvement over 10 clips. Quantization gap identical (0.0237 vs 0.0238). Search saturated at 10 points. Don't increase further.
 - [-] **QAT from the start** — Abandoned: too expensive (model can't learn with full quantization noise from step 0).
 - [-] **Int4/Int5 for some tensors** — Abandoned: int5 MLP experiment showed quantization error is too large.
 - [-] **Aggressive post-quant pruning** — Abandoned: zeroing all ±1 quantized values saves 1.82MB but destroys BPB (+0.02). Need magnitude-aware pruning but code complexity is high.
@@ -61,11 +62,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Speed optimization** — Still 55 steps behind SOTA (7046 vs 7101). Profile ms/step gap. More steps = better BPB.
-2. **More GPTQ clips (15-20)** — 10→5 was worse; maybe 10→15 helps? Marginal but cheap to test.
+1. **Earlier QAT (threshold 0.20-0.25)** — Current threshold 0.15 gives ~525 QAT steps. Lowering to 0.25 gives ~875 steps. More QAT training = better quant alignment. Low risk.
+2. **Speed optimization** — Hardware variance is 85.17-86.05 ms/step across runs. Getting consistently 85ms would add ~50 steps. Profile the gap.
 3. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
 4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
-5. **QAT + brotli combo** — QAT+5clips gave 1.1230 but was 80KB over with zstd. Brotli saves 380-645KB. Might now fit!
+5. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
 
 ## Key Findings
 
@@ -134,3 +135,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-26 | brotli_ema098_noswa | **1.1226** | 15.47MB | **NEW BEST! BEATS SOTA!** Brotli-10 + EMA 0.998 + SWA disabled = 7046 steps. |
 | 2026-03-26 | 5clips_brotli_ema098 | 1.1236 | 15.47MB | **REGRESSED**: 5 clips worse than 10 clips (+0.001 BPB). 10 clips is optimal. |
 | 2026-03-26 | ema_decay_0999 | 1.1293 | — | **REGRESSED**: EMA 0.999 way too broad (+0.0067 BPB). Optimum is 0.998. |
+| 2026-03-26 | 15clips_brotli_ema098 | 1.1234 | 15.48MB | **REGRESSED**: 15 clips no better than 10. Quant gap identical. Slower pod (86ms/step). |
