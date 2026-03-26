@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89707935,
+  "val_bpb": 1.12356022,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600046,
+  "steps": 7036,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ttt_lora_eval",
+  "experiment": "20260326_132120_ttt_lora_eval",
+  "pod_id": "iux3stspeg393q",
+  "elapsed_min": 21.2,
+  "estimated_cost": 7.59
+}

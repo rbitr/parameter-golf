@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.93227888,
+  "val_bpb": 1.14440742,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600065,
+  "steps": 7038,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "label_smoothing_002",
+  "experiment": "20260326_140116_label_smoothing_002",
+  "pod_id": "qjaqgic9j2azrb",
+  "elapsed_min": 19.5,
+  "estimated_cost": 7.01
+}

@@ -28,7 +28,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **Gradient accumulation tweaks** — Trade off batch size vs sequence length.
 - [ ] **Different optimizers** — SOAP, Lion, Adalayer. Muon works well but alternatives exist.
 - [ ] **Data ordering** — Smart curriculum over FineWeb shards. Some data is harder/more useful than others.
-- [ ] **Label smoothing** — Small amount may improve generalization.
+- [x] **Label smoothing** — TRIED: epsilon=0.02. RESULT: **+0.0212 BPB worse** (1.1444 vs 1.1232). Devastating at this model size — model too small to waste capacity softening targets.
 
 ## Quantization & Compression
 
@@ -60,11 +60,10 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Label smoothing (10 clips)** — Small epsilon (0.02) for better generalization with proven-to-fit 10-clip config. Low risk, could give 0.0001-0.0003 BPB.
-2. **Speed optimization** — SOTA gets 7101 steps vs our ~7000. SOTA has SWA overhead but still faster. Profile where the 1ms/step gap comes from.
-3. **More GPTQ clips (15-20)** — Even better compression. 10 clips gives 15.79MB; more clips could shrink further, giving headroom for other improvements.
-4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
-5. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
+1. **Speed optimization** — SOTA gets 7101 steps vs our ~7000. SOTA has SWA overhead but still faster. Profile where the 1ms/step gap comes from.
+2. **More GPTQ clips (15-20)** — Even better compression. 10 clips gives 15.79MB; more clips could shrink further, giving headroom for other improvements.
+3. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
+4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
 
 ## Key Findings
 
@@ -119,3 +118,5 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-25 | qat_prune_fallback | 1.1427 | 14.65MB | **REGRESSED**: Pruning all ±1 quant values saves 1.82MB but costs 0.02 BPB. Way too aggressive. |
 | 2026-03-25 | qat015_10clips_legacy | 1.1234 | 15.93MB | QAT + 10 clips fits under 16MB but BPB worse than best (1.1232). Stride=32 vs 64: negligible. |
 | 2026-03-26 | qat015_7clips_restore | 1.1231 | 16.03MB | **BEST BPB** but 32KB over 16MB. 7 clips: better BPB, worse compression than 10 clips. |
+| 2026-03-26 | ttt_lora_eval | 1.2669 | 16.01MB | **REGRESSED**: TTT LoRA eval much worse. eval_seq=1024 < train_seq=2048 loses context. |
+| 2026-03-26 | label_smoothing_002 | 1.1444 | 15.83MB | **REGRESSED**: Label smoothing epsilon=0.02 devastating (+0.021 BPB). Model too small. |
