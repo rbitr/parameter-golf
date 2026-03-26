@@ -21,8 +21,9 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 - [ ] **Curriculum learning** — Start with shorter sequences, ramp up to 2048. May help early training efficiency.
 - [x] **Warmdown iters tuning** — TRIED: 3500→3800. RESULT: **+0.0002 BPB worse**, artifact OVER 16MB. 3500 is near-optimal; 54% warmdown is too much.
-- [x] **EMA decay tuning** — TRIED: 0.997→0.998. RESULT: **-0.0003 BPB better** but artifact OVER 16MB (16.0-16.7MB). 0.997 is optimal for 16MB budget.
-- [x] **EMA+SWA blend** — TRIED: blend averaging at various alphas. RESULT: Pure EMA is best at scale (alpha=1.0). SWA adds no value.
+- [x] **EMA decay tuning** — TRIED: 0.997→0.998. RESULT: **-0.0006 BPB better** (1.1226 vs 1.1232). Previously blocked by artifact size (zstd), unblocked by brotli compression. **NEW BEST**.
+- [x] **EMA+SWA blend** — TRIED: blend averaging at various alphas. RESULT: Pure EMA is best at scale (alpha=1.0). SWA adds no value AND costs ~1ms/step. Disabling SWA + EMA 0.998 = optimal.
+- [x] **Brotli compression** — TRIED: brotli quality 10 vs zstd-22. RESULT: **Saves 380-645KB** across all models. Key unlock for EMA 0.998. Decompression <1s.
 - [ ] **Alternative LR schedules** — WSD (warmup-stable-decay), cyclic, etc. Warmdown is standard but is it optimal?
 - [ ] **Larger batch size** — If training is compute-bound, larger batches could help with 8 GPUs.
 - [ ] **Gradient accumulation tweaks** — Trade off batch size vs sequence length.
@@ -60,18 +61,26 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Speed optimization** — SOTA gets 7101 steps vs our ~7000. SOTA has SWA overhead but still faster. Profile where the 1ms/step gap comes from.
-2. **More GPTQ clips (15-20)** — Even better compression. 10 clips gives 15.79MB; more clips could shrink further, giving headroom for other improvements.
-3. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
-4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
+1. **QAT + 5-7 clips with brotli** — QAT+7clips gave 1.1231 before (zstd, EMA 0.997). With brotli + EMA 0.998 + no SWA, expect ~1.1224. 533KB headroom means 5 clips should easily fit.
+2. **EMA 0.999** — Even broader averaging. With brotli, the wider distributions fit. Risk: may need more training steps.
+3. **Speed optimization** — Still 55 steps behind SOTA (7046 vs 7101). Profile ms/step gap.
+4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
+5. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
 
 ## Key Findings
 
-### EMA decay tradeoff
-- EMA 0.997: better compression (15.7-15.8MB model), BPB 1.1232
-- EMA 0.998: worse compression (16.0-16.7MB model), BPB 1.1229
-- The wider window produces broader weight distributions that compress poorly
-- EMA 0.997 is optimal for 16MB budget
+### EMA decay tradeoff (UPDATED)
+- EMA 0.997 + zstd: BPB 1.1232, 15.7-15.8MB (old best)
+- EMA 0.998 + zstd: BPB 1.1229, 16.0-16.7MB (over 16MB)
+- **EMA 0.998 + brotli: BPB 1.1226, 15.4-15.5MB (NEW BEST, under 16MB!)**
+- Brotli compression eliminates the EMA 0.998 size penalty
+- SWA disabled saves ~1ms/step → ~50 more training steps
+
+### Compression: brotli vs zstd (NEW)
+- brotli quality=10 beats zstd-22 by 380-645KB across all models
+- Especially effective on EMA 0.998 weights (broader distributions)
+- Compression: ~40s on trained model, decompression: <1s
+- `pip install brotli` required on eval machine
 
 ### GPTQ clips tradeoff (clear trend)
 - 5 clips: ~16.01MB model, 1.1230 BPB (best BPB, worst compression)
@@ -120,3 +129,5 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-26 | qat015_7clips_restore | 1.1231 | 16.03MB | **BEST BPB** but 32KB over 16MB. 7 clips: better BPB, worse compression than 10 clips. |
 | 2026-03-26 | ttt_lora_eval | 1.2669 | 16.01MB | **REGRESSED**: TTT LoRA eval much worse. eval_seq=1024 < train_seq=2048 loses context. |
 | 2026-03-26 | label_smoothing_002 | 1.1444 | 15.83MB | **REGRESSED**: Label smoothing epsilon=0.02 devastating (+0.021 BPB). Model too small. |
+| 2026-03-26 | brotli_ema098 | 1.1246 | 15.47MB | **REGRESSED**: Brotli works but SWA enabled → 6940 steps (too few). |
+| 2026-03-26 | brotli_ema098_noswa | **1.1226** | 15.47MB | **NEW BEST! BEATS SOTA!** Brotli-10 + EMA 0.998 + SWA disabled = 7046 steps. |

@@ -78,7 +78,7 @@ class Hyperparameters:
     mtp_num_heads = int(os.environ.get("MTP_NUM_HEADS", 0))
     mtp_loss_weight = float(os.environ.get("MTP_LOSS_WEIGHT", 0.2))
     muon_beta2 = float(os.environ.get("MUON_BETA2", 0.95))
-    swa_enabled = bool(int(os.environ.get("SWA_ENABLED", "0")))
+    swa_enabled = bool(int(os.environ.get("SWA_ENABLED", "1")))
     swa_every = int(os.environ.get("SWA_EVERY", 50))
     muon_wd = float(os.environ.get("MUON_WD", 0.04))
     adam_wd = float(os.environ.get("ADAM_WD", 0.04))

@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89549319,
+  "val_bpb": 1.1226208,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600083,
+  "steps": 7046,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "brotli_ema098_noswa",
+  "experiment": "20260326_161051_brotli_ema098_noswa",
+  "pod_id": "cy0u6537v2isiy",
+  "elapsed_min": 17.5,
+  "estimated_cost": 6.28
+}

@@ -268,8 +268,8 @@ def run_evaluation(description: str = "eval", seed: int = 1337, dry_run: bool = 
             # Clone or pull - handle both fresh and existing states
             ("cd /workspace && if [ -d parameter-golf/.git ]; then cd parameter-golf && git pull; else rm -rf parameter-golf; git clone https://github.com/openai/parameter-golf.git; fi", SETUP_TIMEOUT),
             ("cd /workspace/parameter-golf && python3 data/cached_challenge_fineweb.py --variant sp1024", SETUP_TIMEOUT),
-            # Install zstandard for better compression (zstd-22 vs zlib saves ~1.5MB)
-            ("pip install --break-system-packages zstandard -q 2>/dev/null || pip install zstandard -q 2>/dev/null || echo 'zstandard install failed'", 120),
+            # Install compression libraries
+            ("pip install --break-system-packages brotli zstandard -q 2>/dev/null || pip install brotli zstandard -q 2>/dev/null || echo 'compression install failed'", 120),
             # Check if flash-attn already available, if not try install (compilation takes time)
             ("python3 -c 'from flash_attn_interface import flash_attn_func; print(\"FA3 available\")' 2>/dev/null || "
              "(pip install --break-system-packages flash-attn --no-build-isolation -q 2>/dev/null || pip install flash-attn --no-build-isolation -q 2>/dev/null || echo 'flash-attn install failed, will use SDPA fallback')", 600),
