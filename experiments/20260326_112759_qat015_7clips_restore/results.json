@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89636027,
+  "val_bpb": 1.12313434,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600070,
+  "steps": 7003,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "qat015_7clips_restore",
+  "experiment": "20260326_112759_qat015_7clips_restore",
+  "pod_id": "09vkxstk82y851",
+  "elapsed_min": 19.6,
+  "estimated_cost": 7.03
+}

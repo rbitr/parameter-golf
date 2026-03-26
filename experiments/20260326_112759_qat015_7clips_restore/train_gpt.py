@@ -897,7 +897,7 @@ def quantize_int6_per_row(t: Tensor, clip_range: int = 31) -> tuple[Tensor, Tens
     t32 = t.float()
     if t32.ndim == 2:
         best_q, best_s, best_err = None, None, float('inf')
-        for pct in [0.998, 0.999, 0.9993, 0.9995, 0.9997, 0.9999, 0.99995, 0.99999, 0.999999, 1.0]:
+        for pct in [0.999, 0.9995, 0.9998, 0.9999, 0.99995, 0.99999, 1.0]:
             if pct < 1.0:
                 row_clip = torch.quantile(t32.abs(), pct, dim=1)
             else:
