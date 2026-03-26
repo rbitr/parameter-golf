@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89711229,
+  "val_bpb": 1.12357973,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600085,
+  "steps": 7038,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "5clips_brotli_ema098",
+  "experiment": "20260326_165606_5clips_brotli_ema098",
+  "pod_id": "8qtxghptlllmk5",
+  "elapsed_min": 19.9,
+  "estimated_cost": 7.13
+}

@@ -61,9 +61,9 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **QAT + 5-7 clips with brotli** — QAT+7clips gave 1.1231 before (zstd, EMA 0.997). With brotli + EMA 0.998 + no SWA, expect ~1.1224. 533KB headroom means 5 clips should easily fit.
-2. **EMA 0.999** — Even broader averaging. With brotli, the wider distributions fit. Risk: may need more training steps.
-3. **Speed optimization** — Still 55 steps behind SOTA (7046 vs 7101). Profile ms/step gap.
+1. **EMA 0.999** — Even broader averaging. With brotli, the wider distributions fit. Risk: may need more training steps.
+2. **Speed optimization** — Still 55 steps behind SOTA (7046 vs 7101). Profile ms/step gap. More steps = better BPB.
+3. **More GPTQ clips (15-20)** — 10→5 was worse; maybe 10→15 helps? Marginal but cheap to test.
 4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
 5. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
 
@@ -82,12 +82,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 - Compression: ~40s on trained model, decompression: <1s
 - `pip install brotli` required on eval machine
 
-### GPTQ clips tradeoff (clear trend)
-- 5 clips: ~16.01MB model, 1.1230 BPB (best BPB, worst compression)
-- 7 clips: ~15.96MB model, 1.1231 BPB
-- 10 clips: ~15.79MB model, 1.1232 BPB (worst BPB, best compression)
-- More clips = tighter clips = narrower distributions = better compression but slightly worse BPB
-- Artifact size has ~400KB variance between runs regardless of clips
+### GPTQ clips tradeoff (UPDATED — 10 clips is optimal)
+- 5 clips + brotli + EMA 0.998: 1.1236 BPB, 15.47MB — WORSE than 10 clips
+- 10 clips + brotli + EMA 0.998: 1.1226 BPB, 15.47MB — BEST
+- More clips = better optimal MSE search = better BPB. Previous "trend" was noise.
+- 10 clips is confirmed optimal. Don't reduce.
 
 ### QAT + GPTQ clips interaction
 - QAT + 5 clips: 1.1230 BPB, 16.08MB (best BPB, over 16MB)
@@ -131,3 +130,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-26 | label_smoothing_002 | 1.1444 | 15.83MB | **REGRESSED**: Label smoothing epsilon=0.02 devastating (+0.021 BPB). Model too small. |
 | 2026-03-26 | brotli_ema098 | 1.1246 | 15.47MB | **REGRESSED**: Brotli works but SWA enabled → 6940 steps (too few). |
 | 2026-03-26 | brotli_ema098_noswa | **1.1226** | 15.47MB | **NEW BEST! BEATS SOTA!** Brotli-10 + EMA 0.998 + SWA disabled = 7046 steps. |
+| 2026-03-26 | 5clips_brotli_ema098 | 1.1236 | 15.47MB | **REGRESSED**: 5 clips worse than 10 clips (+0.001 BPB). 10 clips is optimal. |
