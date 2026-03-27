@@ -13,7 +13,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **Linear attention variants** — Replace softmax attention in some layers with linear attention for efficiency. Could allow more layers or longer context.
 - [ ] **Cross-layer attention / dense connections** — Reuse KV from earlier layers. More information flow without more parameters.
 - [ ] **Wider vs deeper tradeoffs** — Systematic sweep: more layers with smaller dim vs fewer layers with larger dim. The SOTA uses 11L/512d but is that optimal?
-- [ ] **Alternative activation functions** — SwiGLU, GELU variants. relu^2 is good but maybe not optimal at this scale.
+- [x] **Alternative activation functions** — TRIED: LeakyReLU(0.5)². RESULT: **-0.0019 BPB better** (1.1207 vs 1.1226). Huge win! Preserves negative gradient flow. Try other slopes (0.3, 0.7)?
 - [ ] **Factored embeddings** — Low-rank embedding matrix to save parameters, especially if increasing vocab size.
 - [ ] **Mixture of depths** — Skip some layers for some tokens via a learned router.
 
@@ -147,3 +147,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-27 | ve3layers_8_9_10 | 1.1241 | 15.47MB | **REGRESSED**: VE on 3 layers (+0.0015 BPB). Layer 8 too early for token identity. 9,10 optimal. |
 | 2026-03-27 | batch524k_more_steps | 1.1256 | — | **REGRESSED**: Smaller batch (524K vs 786K) +0.003 BPB. Noisier gradients hurt Muon. 786K optimal. |
 | 2026-03-27 | cosine_warmdown | 1.1236 | 15.69MB | **REGRESSED**: Cosine warmdown +0.001 BPB. Linear decay better for Muon optimizer. |
+| 2026-03-27 | leaky_relu_05_squared | **1.1207** | 15.55MB | **NEW BEST!** LeakyReLU(0.5)² -0.0019 BPB. Preserves negative gradient flow. |

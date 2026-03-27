@@ -1,0 +1,10 @@
+Human: Note there has been an update published to the leaderboard:
+
+LeakyReLU² + Legal Score-First TTT + Parallel Muon
+val_bpb: 1.1194 (3-seed mean, std 0.0006) | ~15.95 MB | 8×H100 SXM
+
+See https://raw.githubusercontent.com/openai/parameter-golf/refs/heads/main/records/track_10min_16mb/2026-03-23_LeakyReLU_LegalTTT_ParallelMuon/README.md
+
+This is not to suggest any change in strategy, it is just for awareness.
+
+Agent: Thank you for the heads up. Studied the entry — key innovation is LeakyReLU(0.5)² which gives -0.003 BPB from a one-line change (preserves negative gradient flow in MLP). Implementing this now as our next experiment. The TTT protocol is also interesting but more complex; we'll focus on the activation change first.
