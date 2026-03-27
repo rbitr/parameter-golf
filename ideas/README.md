@@ -68,7 +68,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 3. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
 4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
 5. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
-6. **Disable QAT entirely** — If 0.20 is worse and 0.15 is current, maybe 0.0 (no QAT) is even better? Low risk test.
+6. ~~**Disable QAT entirely**~~ — TRIED: 0.0 gave 1.1233, +0.0007 worse. QAT 0.15 is the sweet spot — helps both model quality and quant gap.
 
 ## Key Findings
 
@@ -93,12 +93,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 - More clips = better optimal MSE search = better BPB. Previous "trend" was noise.
 - 10 clips is confirmed optimal. Don't reduce.
 
-### QAT + GPTQ clips interaction
-- QAT + 5 clips: 1.1230 BPB, 16.08MB (best BPB, over 16MB)
-- QAT + 10 clips: 1.1234 BPB, 15.93MB (fits, but worse BPB)
-- No QAT + 10 clips: 1.1232 BPB, 15.79MB (current best valid)
-- 10 clips may pick suboptimal clip points for QAT-trained weights
-- Try 7-8 clips as middle ground
+### QAT threshold fully characterized
+- QAT 0.20: 1.1234 — too much QAT hurts convergence
+- QAT 0.15: 1.1226 — **optimal sweet spot** (helps model quality + quant gap)
+- QAT 0.00: 1.1233 — no QAT gives worse model AND larger quant gap
+- Don't revisit QAT tuning — it's settled at 0.15
 
 ### Sliding window stride
 - stride=32 vs stride=64: only 0.00003 BPB difference
@@ -140,3 +139,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-26 | 15clips_brotli_ema098 | 1.1234 | 15.48MB | **REGRESSED**: 15 clips no better than 10. Quant gap identical. Slower pod (86ms/step). |
 | 2026-03-26 | qat020_brotli_ema098 | 1.1234 | — | **REGRESSED**: Earlier QAT (0.20) hurts training quality AND quant gap. 0.15 is optimal. |
 | 2026-03-27 | mtp1_head_aux_loss | 1.1339 | 15.47MB* | **REGRESSED**: MTP 1 head (weight 0.2) devastating (+0.0113 BPB). Aux losses bad at this scale. |
+| 2026-03-27 | noqat_brotli_ema098 | 1.1233 | 15.47MB | **REGRESSED**: No QAT (+0.0007 BPB). QAT 0.15 confirmed optimal. |
