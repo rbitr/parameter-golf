@@ -24,7 +24,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [x] **EMA decay tuning** — TRIED: 0.997→0.998: **-0.0006 BPB better** (1.1226). 0.999: **+0.0067 BPB worse** (1.1293). Optimum is 0.998. Not monotonic — 0.999 averages too much outdated history.
 - [x] **EMA+SWA blend** — TRIED: blend averaging at various alphas. RESULT: Pure EMA is best at scale (alpha=1.0). SWA adds no value AND costs ~1ms/step. Disabling SWA + EMA 0.998 = optimal.
 - [x] **Brotli compression** — TRIED: brotli quality 10 vs zstd-22. RESULT: **Saves 380-645KB** across all models. Key unlock for EMA 0.998. Decompression <1s.
-- [ ] **Alternative LR schedules** — WSD (warmup-stable-decay), cyclic, etc. Warmdown is standard but is it optimal?
+- [x] **Alternative LR schedules** — TRIED: Cosine warmdown (vs linear). RESULT: **+0.001 BPB worse** (1.1236). Muon optimizer prefers linear decay. Don't try other warmdown shapes.
 - [x] **Smaller batch size (524K)** — TRIED: 524K tokens (vs 786K). RESULT: **+0.003 BPB worse** (1.1256). Got 10,034 steps (42% more) but noisier gradients devastated Muon optimizer. 786K is optimal.
 - [-] **Larger batch size** — Abandoned: smaller batch already regressed; larger would give too few steps. 786K is the sweet spot.
 - [-] **Gradient accumulation tweaks** — Abandoned: batch size experiment shows 786K is well-optimized.
@@ -146,3 +146,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-27 | bigram4096_brotli_ema098 | 1.1244 | — | **REGRESSED**: 4096 bigram buckets (+0.0018 BPB). Extra params undertrained. 2048 optimal. |
 | 2026-03-27 | ve3layers_8_9_10 | 1.1241 | 15.47MB | **REGRESSED**: VE on 3 layers (+0.0015 BPB). Layer 8 too early for token identity. 9,10 optimal. |
 | 2026-03-27 | batch524k_more_steps | 1.1256 | — | **REGRESSED**: Smaller batch (524K vs 786K) +0.003 BPB. Noisier gradients hurt Muon. 786K optimal. |
+| 2026-03-27 | cosine_warmdown | 1.1236 | 15.69MB | **REGRESSED**: Cosine warmdown +0.001 BPB. Linear decay better for Muon optimizer. |

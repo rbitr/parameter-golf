@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89714158,
+  "val_bpb": 1.12359708,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600015,
+  "steps": 7034,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "cosine_warmdown",
+  "experiment": "20260327_205016_cosine_warmdown",
+  "pod_id": "lr6p11kee9cweo",
+  "elapsed_min": 19.9,
+  "estimated_cost": 7.12
+}
