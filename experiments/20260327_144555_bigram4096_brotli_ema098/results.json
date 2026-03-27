@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89847636,
+  "val_bpb": 1.12438761,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600049,
+  "steps": 7013,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "bigram4096_brotli_ema098",
+  "experiment": "20260327_144555_bigram4096_brotli_ema098",
+  "pod_id": "cgjrgo2mu7i7k1",
+  "elapsed_min": 19.8,
+  "estimated_cost": 7.09
+}
