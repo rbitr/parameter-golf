@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.91458786,
+  "val_bpb": 1.13392978,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600014,
+  "steps": 6940,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "mtp1_head_aux_loss",
+  "experiment": "20260327_133143_mtp1_head_aux_loss",
+  "pod_id": "p6flayklirccx1",
+  "elapsed_min": 18.9,
+  "estimated_cost": 6.79
+}

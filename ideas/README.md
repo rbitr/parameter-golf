@@ -30,6 +30,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **Different optimizers** — SOAP, Lion, Adalayer. Muon works well but alternatives exist.
 - [ ] **Data ordering** — Smart curriculum over FineWeb shards. Some data is harder/more useful than others.
 - [x] **Label smoothing** — TRIED: epsilon=0.02. RESULT: **+0.0212 BPB worse** (1.1444 vs 1.1232). Devastating at this model size — model too small to waste capacity softening targets.
+- [x] **Multi-token prediction (MTP)** — TRIED: 1 head, weight=0.2. RESULT: **+0.0113 BPB worse** (1.1339 vs 1.1226). Auxiliary losses don't help at this scale — gradient interference + 1.5% compute overhead.
 
 ## Quantization & Compression
 
@@ -138,3 +139,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-26 | ema_decay_0999 | 1.1293 | — | **REGRESSED**: EMA 0.999 way too broad (+0.0067 BPB). Optimum is 0.998. |
 | 2026-03-26 | 15clips_brotli_ema098 | 1.1234 | 15.48MB | **REGRESSED**: 15 clips no better than 10. Quant gap identical. Slower pod (86ms/step). |
 | 2026-03-26 | qat020_brotli_ema098 | 1.1234 | — | **REGRESSED**: Earlier QAT (0.20) hurts training quality AND quant gap. 0.15 is optimal. |
+| 2026-03-27 | mtp1_head_aux_loss | 1.1339 | 15.47MB* | **REGRESSED**: MTP 1 head (weight 0.2) devastating (+0.0113 BPB). Aux losses bad at this scale. |
