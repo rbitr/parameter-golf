@@ -45,6 +45,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **Structured sparsity** — 2:4 or 4:8 structured sparsity for better compression ratios.
 - [ ] **Magnitude-aware pruning** — Prune by |q * scale| instead of |q|. Could save 100KB with minimal BPB impact.
 - [x] **BigramHash bucket tuning** — TRIED: 4096 buckets (vs 2048). RESULT: **+0.0018 BPB worse** (1.1244). Extra params undertrained at 7013 steps. 2048 is optimal.
+- [x] **Value Embedding layer count** — TRIED: VE on 8,9,10 (3 layers) vs 9,10 (2 layers). RESULT: +0.0015 BPB worse. Layer 8 too early for token identity. 9,10 is optimal.
 - [ ] **Vocabulary size optimization** — Larger vocab = fewer tokens = potentially better BPB, but more embedding params. Find the sweet spot.
 - [ ] **Knowledge distillation into quantized model** — Train large, distill into the 16MB target.
 
@@ -142,3 +143,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-27 | mtp1_head_aux_loss | 1.1339 | 15.47MB* | **REGRESSED**: MTP 1 head (weight 0.2) devastating (+0.0113 BPB). Aux losses bad at this scale. |
 | 2026-03-27 | noqat_brotli_ema098 | 1.1233 | 15.47MB | **REGRESSED**: No QAT (+0.0007 BPB). QAT 0.15 confirmed optimal. |
 | 2026-03-27 | bigram4096_brotli_ema098 | 1.1244 | — | **REGRESSED**: 4096 bigram buckets (+0.0018 BPB). Extra params undertrained. 2048 optimal. |
+| 2026-03-27 | ve3layers_8_9_10 | 1.1241 | 15.47MB | **REGRESSED**: VE on 3 layers (+0.0015 BPB). Layer 8 too early for token identity. 9,10 optimal. |
