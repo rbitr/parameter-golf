@@ -25,8 +25,9 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [x] **EMA+SWA blend** — TRIED: blend averaging at various alphas. RESULT: Pure EMA is best at scale (alpha=1.0). SWA adds no value AND costs ~1ms/step. Disabling SWA + EMA 0.998 = optimal.
 - [x] **Brotli compression** — TRIED: brotli quality 10 vs zstd-22. RESULT: **Saves 380-645KB** across all models. Key unlock for EMA 0.998. Decompression <1s.
 - [ ] **Alternative LR schedules** — WSD (warmup-stable-decay), cyclic, etc. Warmdown is standard but is it optimal?
-- [ ] **Larger batch size** — If training is compute-bound, larger batches could help with 8 GPUs.
-- [ ] **Gradient accumulation tweaks** — Trade off batch size vs sequence length.
+- [x] **Smaller batch size (524K)** — TRIED: 524K tokens (vs 786K). RESULT: **+0.003 BPB worse** (1.1256). Got 10,034 steps (42% more) but noisier gradients devastated Muon optimizer. 786K is optimal.
+- [-] **Larger batch size** — Abandoned: smaller batch already regressed; larger would give too few steps. 786K is the sweet spot.
+- [-] **Gradient accumulation tweaks** — Abandoned: batch size experiment shows 786K is well-optimized.
 - [ ] **Different optimizers** — SOAP, Lion, Adalayer. Muon works well but alternatives exist.
 - [ ] **Data ordering** — Smart curriculum over FineWeb shards. Some data is harder/more useful than others.
 - [x] **Label smoothing** — TRIED: epsilon=0.02. RESULT: **+0.0212 BPB worse** (1.1444 vs 1.1232). Devastating at this model size — model too small to waste capacity softening targets.
@@ -144,3 +145,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-27 | noqat_brotli_ema098 | 1.1233 | 15.47MB | **REGRESSED**: No QAT (+0.0007 BPB). QAT 0.15 confirmed optimal. |
 | 2026-03-27 | bigram4096_brotli_ema098 | 1.1244 | — | **REGRESSED**: 4096 bigram buckets (+0.0018 BPB). Extra params undertrained. 2048 optimal. |
 | 2026-03-27 | ve3layers_8_9_10 | 1.1241 | 15.47MB | **REGRESSED**: VE on 3 layers (+0.0015 BPB). Layer 8 too early for token identity. 9,10 optimal. |
+| 2026-03-27 | batch524k_more_steps | 1.1256 | — | **REGRESSED**: Smaller batch (524K vs 786K) +0.003 BPB. Noisier gradients hurt Muon. 786K optimal. |

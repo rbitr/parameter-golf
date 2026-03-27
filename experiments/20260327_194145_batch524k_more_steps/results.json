@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.90044567,
+  "val_bpb": 1.12555395,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600004,
+  "steps": 10034,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "batch524k_more_steps",
+  "experiment": "20260327_194145_batch524k_more_steps",
+  "pod_id": "tefksapbehdgz5",
+  "elapsed_min": 18.9,
+  "estimated_cost": 6.77
+}
