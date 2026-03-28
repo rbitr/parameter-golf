@@ -53,7 +53,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 ## Evaluation
 
 - [x] **Sliding window stride optimization** — TRIED stride=32 vs stride=64. RESULT: Only 0.00003 BPB difference. Not worth the 2x eval time. Stride=64 is optimal.
-- [~] **Test-time training (TTT)** — TRIED: Full-model SGD TTT. SOTA defaults (lr=0.002, 3ep) caused catastrophic forgetting (+0.023 BPB). Conservative (lr=0.0005, 1ep) gives **-0.0012 BPB** improvement but trajectory still degrades after chunk 50. NEXT: try lr=0.0002, 64K chunks, or freeze early blocks to push toward SOTA's -0.0021.
+- [~] **Test-time training (TTT)** — TRIED: Full-model SGD TTT. SOTA defaults (lr=0.002, 3ep) caused catastrophic forgetting (+0.023 BPB). Conservative (lr=0.0005, 1ep) gives **-0.0012 BPB** improvement but trajectory degrades after chunk 50. Freeze first 6 blocks: **+0.0005 worse** (1.1208 vs 1.1203) — freezing hurts, forgetting is distributed. NEXT: try lr=0.0003 or 64K chunks.
 - [ ] **Longer eval context** — Evaluate with context > training length via position extrapolation.
 - [ ] **Ensembling within 16MB** — Multiple tiny models that vote? Probably not enough budget.
 
@@ -66,7 +66,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **TTT hyperparameter tuning** — Currently -0.0012 BPB. Target: -0.002. Try: lr=0.0002, 64K chunks, freeze first 4 blocks. Highest priority.
+1. **TTT hyperparameter tuning** — Currently -0.0012 BPB. Target: -0.002. Freeze blocks=6 FAILED (+0.0005). Try next: lr=0.0003 with freeze=0, or 64K chunks. Highest priority.
 2. ~~**Earlier QAT (threshold 0.20-0.25)**~~ — TRIED: 0.20 gave 1.1234, +0.0008 worse. 0.15 is optimal.
 3. **Speed optimization** — Hardware variance is 85.17-86.05 ms/step across runs. Getting consistently 85ms would add ~50 steps. Profile the gap.
 4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
@@ -151,3 +151,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-28 | leaky_relu_07_squared | 1.1242 | — | **REGRESSED**: LeakyReLU(0.7)² +0.0035 BPB. Too symmetric; 0.5 is optimal slope. |
 | 2026-03-28 | ttt_legal_score_first_v2 | 1.1436 | 15.55MB | **REGRESSED**: TTT with SOTA defaults (lr=0.002, 3ep) catastrophic forgetting. |
 | 2026-03-28 | ttt_conservative_lr0005_ep1 | **1.1203** | 15.55MB | **NEW BEST!** TTT with lr=0.0005, 1ep: -0.0012 BPB improvement over sliding window. |
+| 2026-03-28 | ttt_freeze6_lr0005_ep1 | 1.1208 | 15.55MB | **REGRESSED**: Freeze first 6 blocks +0.0005 BPB. Forgetting is distributed, not in early layers. |

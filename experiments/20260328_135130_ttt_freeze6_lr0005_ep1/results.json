@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89244656,
+  "val_bpb": 1.12081642,
+  "artifact_size_bytes": 15549178,
+  "train_time_ms": 600033,
+  "steps": 6926,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ttt_freeze6_lr0005_ep1",
+  "experiment": "20260328_135130_ttt_freeze6_lr0005_ep1",
+  "pod_id": "neezrplgf7qlmx",
+  "elapsed_min": 23.4,
+  "estimated_cost": 8.38
+}
