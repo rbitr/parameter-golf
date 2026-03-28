@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89113078,
+  "val_bpb": 1.12003714,
+  "artifact_size_bytes": 15547111,
+  "train_time_ms": 600021,
+  "steps": 6976,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ttt_anchor_alpha_0003",
+  "experiment": "20260328_154436_ttt_anchor_alpha_0003",
+  "pod_id": "f4mn0u676b9qrj",
+  "elapsed_min": 23.9,
+  "estimated_cost": 8.59
+}

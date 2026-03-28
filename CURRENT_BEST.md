@@ -4,14 +4,14 @@
 
 | Metric | Value |
 |--------|-------|
-| val_bpb | 1.1203 (with TTT) / 1.1207 (base, no TTT) |
-| val_loss | 1.8915 (TTT) / 1.8923 (base) |
-| artifact_size | 15,545,342 bytes (under 16MB, 455KB headroom) |
-| experiment | 20260328_125955_ttt_conservative_lr0005_ep1 |
+| val_bpb | 1.1200 (with TTT) / 1.1208 (base, no TTT) |
+| val_loss | 1.8911 (TTT) / 1.8924 (base) |
+| artifact_size | 15,547,111 bytes (under 16MB, 453KB headroom) |
+| experiment | 20260328_154436_ttt_anchor_alpha_0003 |
 | base_experiment | 20260327_212743_leaky_relu_05_squared |
 | seed | 1337 |
-| steps | 6915 |
-| ms/step | ~86.5 |
+| steps | 6976 |
+| ms/step | ~86 |
 
 ## Key Configuration
 - 11 layers, 512-dim, 8 heads (4 KV), 3x MLP, 1024 vocab
@@ -25,15 +25,14 @@
 - Value Embedding (dim=128, layers 9,10)
 - Int6 + **brotli-10** compression, legacy torch.save format
 - Warmdown 3500 iters, Muon optimizer
-- **TTT: SGD lr=0.0005, 1 epoch, 32K chunks, freeze_blocks=0**
+- **TTT: SGD lr=0.0005, 1 epoch, 32K chunks, freeze_blocks=0, anchor_alpha=0.0003**
 
-## Key Innovation: Legal Score-First TTT
-- Eval-time adaptation: score each 32K chunk, then train on it
-- SGD (lr=0.0005, momentum=0.9), 1 epoch per chunk, cosine LR decay
-- All blocks trainable (freeze_blocks=0)
-- -0.0012 BPB improvement over sliding window baseline
-- 318s extra eval time on 8xH100 (fits within budget)
-- STILL BEING TUNED: trajectory shows degradation after chunk 50. Further lr reduction or fewer steps could improve by another -0.001
+## TTT Status
+- Anchor regularization (alpha=0.0003) reduces TTT delta from -0.0012 to -0.0007
+- But base model got more steps this run (6976 vs 6915), so absolute BPB is better
+- The anchor approach is not clearly beneficial — it damps good adaptation and bad drift equally
+- TTT improvement range: -0.0007 to -0.0012 depending on run
+- Trajectory still degrades after chunk 50 regardless of anchor
 
 ## Previous Innovation: LeakyReLU(0.5)²
 - `torch.relu(x)` → `F.leaky_relu(x, 0.5)` in MLP
@@ -45,8 +44,9 @@
 
 ## Leaderboard SOTA (for reference)
 - **1.1194 BPB** — LeakyReLU² + Legal TTT + Parallel Muon (2026-03-23)
-- Our gap: +0.0009 BPB (down from +0.0013 before TTT)
-- SOTA gets -0.0021 from TTT; we get -0.0012. Gap likely from TTT hyperparameters needing further tuning.
+- Our gap: +0.0006 BPB (down from +0.0009)
+- SOTA gets -0.0021 from TTT; we get -0.0007 to -0.0012
+- SOTA uses Parameter Banking + BigramHash 3072 — architectural differences may explain TTT resilience
 
 ## Infrastructure Notes
 - RunPod template has FA3 pre-installed (no pip install needed)
