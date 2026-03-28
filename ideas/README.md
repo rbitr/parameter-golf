@@ -53,7 +53,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 ## Evaluation
 
 - [x] **Sliding window stride optimization** — TRIED stride=32 vs stride=64. RESULT: Only 0.00003 BPB difference. Not worth the 2x eval time. Stride=64 is optimal.
-- [x] **Test-time training (TTT)** — TRIED: Full-model SGD TTT. SOTA defaults (lr=0.002, 3ep) caused catastrophic forgetting (+0.023 BPB). Conservative (lr=0.0005, 1ep) gives **-0.0012 BPB** (best). lr=0.001: -0.0010 BPB (worse, model doesn't tolerate higher LR). Freeze 6 blocks: +0.0005 worse. Anchor alpha=0.0003: reduces delta to -0.0007. **TTT is saturated at -0.0012 for our model.** SOTA gets -0.0025 due to architectural differences (Parameter Banking). Pivoting to base model improvements.
+- [x] **Test-time training (TTT)** — TRIED: Full-model SGD TTT. SOTA defaults (lr=0.002, 3ep) caused catastrophic forgetting (+0.023 BPB). Conservative (lr=0.0005, 1ep) gives **-0.0012 BPB** (best delta). lr=0.001: -0.0010. Freeze 6 blocks: +0.0005 worse. Anchor alpha=0.0003: delta=-0.0007. **2 epochs at lr=0.0005: delta=-0.0007** (extra epoch causes forgetting, no net gain). TTT saturated at -0.0007 to -0.0012 for our model. SOTA gets -0.0021 via architectural resilience (Parameter Banking, BigramHash@512d). **TTT tuning exhausted.**
 - [ ] **Longer eval context** — Evaluate with context > training length via position extrapolation.
 - [ ] **Ensembling within 16MB** — Multiple tiny models that vote? Probably not enough budget.
 
@@ -67,11 +67,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 ## Priority Queue (next experiments)
 
 1. **Speed optimization (Parameter Banking)** — SOTA gets 83.3ms/step vs our ~86ms by batching Linear layers into contiguous banks. ~200 more training steps. Medium complexity, confirmed zero quality impact by SOTA.
-2. **TTT 2 epochs at lr=0.0005** — One more shot: keep conservative LR but double epochs. Could push TTT delta from -0.0012 to -0.0015+. Quick experiment.
-2. ~~**Earlier QAT (threshold 0.20-0.25)**~~ — TRIED: 0.20 gave 1.1234, +0.0008 worse. 0.15 is optimal.
-3. **Speed optimization** — Hardware variance is 85.17-86.05 ms/step across runs. Getting consistently 85ms would add ~50 steps. Profile the gap.
-4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
-5. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
+2. **BigramHash @512d (1536 buckets)** — SOTA uses 1536 buckets at full 512d (no projection layer) vs our 2048@128d+proj. Much more expressive bigram features. May also improve TTT resilience. Need to check if artifact fits under 16MB.
+3. ~~**TTT 2 epochs at lr=0.0005**~~ — TRIED: delta=-0.0007, same as 1ep+anchor. Extra epoch causes forgetting. TTT tuning exhausted.
+4. ~~**Earlier QAT (threshold 0.20-0.25)**~~ — TRIED: 0.20 gave 1.1234, +0.0008 worse. 0.15 is optimal.
+5. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
+6. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
 6. ~~**Disable QAT entirely**~~ — TRIED: 0.0 gave 1.1233, +0.0007 worse. QAT 0.15 is the sweet spot — helps both model quality and quant gap.
 
 ## Key Findings
@@ -155,3 +155,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-28 | ttt_freeze6_lr0005_ep1 | 1.1208 | 15.55MB | **REGRESSED**: Freeze first 6 blocks +0.0005 BPB. Forgetting is distributed, not in early layers. |
 | 2026-03-28 | ttt_anchor_alpha_0003 | **1.1200** | 15.55MB | **NEW BEST** absolute BPB but anchor reduces TTT delta (-0.0007 vs -0.0012). Improvement from base getting more steps (6976). |
 | 2026-03-28 | ttt_lr001_noanchor | 1.1204 | 15.55MB | **REGRESSED**: Higher TTT LR (0.001 vs 0.0005) reduces TTT delta from -0.025 to -0.024. TTT saturated at lr=0.0005. |
+| 2026-03-28 | ttt_2ep_lr0005 | **1.1198** | 15.56MB | **NEW BEST** absolute but TTT delta=-0.0007 (same as 1ep+anchor). 2 epochs causes forgetting, base improvement from run variance. |

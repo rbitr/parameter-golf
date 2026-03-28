@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89065443,
+  "val_bpb": 1.11975501,
+  "artifact_size_bytes": 15561305,
+  "train_time_ms": 600008,
+  "steps": 6943,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ttt_2ep_lr0005",
+  "experiment": "20260328_180704_ttt_2ep_lr0005",
+  "pod_id": "9a0jpe7p9p8tyf",
+  "elapsed_min": 25.4,
+  "estimated_cost": 9.1
+}

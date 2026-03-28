@@ -4,13 +4,13 @@
 
 | Metric | Value |
 |--------|-------|
-| val_bpb | 1.1200 (with TTT) / 1.1208 (base, no TTT) |
-| val_loss | 1.8911 (TTT) / 1.8924 (base) |
-| artifact_size | 15,547,111 bytes (under 16MB, 453KB headroom) |
-| experiment | 20260328_154436_ttt_anchor_alpha_0003 |
+| val_bpb | 1.1198 (with TTT) / 1.1204 (base, no TTT) |
+| val_loss | 1.8907 (TTT) / 1.8918 (base) |
+| artifact_size | 15,561,305 bytes (under 16MB, 439KB headroom) |
+| experiment | 20260328_180704_ttt_2ep_lr0005 |
 | base_experiment | 20260327_212743_leaky_relu_05_squared |
 | seed | 1337 |
-| steps | 6976 |
+| steps | 6943 |
 | ms/step | ~86 |
 
 ## Key Configuration
@@ -25,14 +25,15 @@
 - Value Embedding (dim=128, layers 9,10)
 - Int6 + **brotli-10** compression, legacy torch.save format
 - Warmdown 3500 iters, Muon optimizer
-- **TTT: SGD lr=0.0005, 1 epoch, 32K chunks, freeze_blocks=0, anchor_alpha=0.0003**
+- **TTT: SGD lr=0.0005, 2 epochs, 32K chunks, freeze_blocks=0, anchor_alpha=0.0**
 
 ## TTT Status
-- Anchor regularization (alpha=0.0003) reduces TTT delta from -0.0012 to -0.0007
-- But base model got more steps this run (6976 vs 6915), so absolute BPB is better
-- The anchor approach is not clearly beneficial — it damps good adaptation and bad drift equally
-- TTT improvement range: -0.0007 to -0.0012 depending on run
-- Trajectory still degrades after chunk 50 regardless of anchor
+- TTT is saturated at -0.0007 to -0.0012 for our architecture
+- 2 epochs at lr=0.0005: delta=-0.0007 (same as 1ep+anchor, worse than 1ep no-anchor)
+- 1 epoch at lr=0.0005: delta=-0.0012 (best delta)
+- Anchor alpha=0.0003: delta=-0.0007 (no benefit)
+- SOTA gets -0.0021 due to architectural differences (Parameter Banking, BigramHash@512d)
+- **Focus on base model improvements, TTT is capped**
 
 ## Previous Innovation: LeakyReLU(0.5)²
 - `torch.relu(x)` → `F.leaky_relu(x, 0.5)` in MLP
@@ -44,9 +45,9 @@
 
 ## Leaderboard SOTA (for reference)
 - **1.1194 BPB** — LeakyReLU² + Legal TTT + Parallel Muon (2026-03-23)
-- Our gap: +0.0006 BPB (down from +0.0009)
+- Our gap: +0.0004 BPB (down from +0.0006)
 - SOTA gets -0.0021 from TTT; we get -0.0007 to -0.0012
-- SOTA uses Parameter Banking + BigramHash 3072 — architectural differences may explain TTT resilience
+- SOTA key differences: Parameter Banking (83.3ms/step), BigramHash 1536@512d (full dim, no proj), TTT lr=0.002/3ep (tolerates aggressive settings), EMA 0.997+SWA, GPTQ+lzma
 
 ## Infrastructure Notes
 - RunPod template has FA3 pre-installed (no pip install needed)
