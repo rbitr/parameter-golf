@@ -63,3 +63,6 @@
 | 2026-03-27 21:10 | cosine_warmdown | 19.9 min | $7.12 | $268.19 |
 | 2026-03-27 21:47 | leaky_relu_05_squared | 19.5 min | $7.01 | $275.20 |
 | 2026-03-28 11:22 | leaky_relu_07_squared | 19.4 min | $6.94 | $282.14 |
+| 2026-03-28 12:23 | ttt_legal_score_first (FAILED) | 24.0 min | $8.60 | $290.74 |
+| 2026-03-28 12:56 | ttt_legal_score_first_v2 | 28.4 min | $10.20 | $300.94 |
+| 2026-03-28 13:24 | ttt_conservative_lr0005_ep1 | 24.9 min | $8.94 | $309.88 |

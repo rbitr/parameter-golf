@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.93096427,
+  "val_bpb": 1.14362884,
+  "artifact_size_bytes": 15546651,
+  "train_time_ms": 600020,
+  "steps": 6911,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ttt_legal_score_first_v2",
+  "experiment": "20260328_122756_ttt_legal_score_first_v2",
+  "pod_id": "90gx6wkuovpmor",
+  "elapsed_min": 28.4,
+  "estimated_cost": 10.2
+}

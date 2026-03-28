@@ -53,7 +53,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 ## Evaluation
 
 - [x] **Sliding window stride optimization** — TRIED stride=32 vs stride=64. RESULT: Only 0.00003 BPB difference. Not worth the 2x eval time. Stride=64 is optimal.
-- [ ] **Test-time training (TTT)** — LoRA-based TTT is already on the leaderboard at 1.19. Could be combined with better base models.
+- [~] **Test-time training (TTT)** — TRIED: Full-model SGD TTT. SOTA defaults (lr=0.002, 3ep) caused catastrophic forgetting (+0.023 BPB). Conservative (lr=0.0005, 1ep) gives **-0.0012 BPB** improvement but trajectory still degrades after chunk 50. NEXT: try lr=0.0002, 64K chunks, or freeze early blocks to push toward SOTA's -0.0021.
 - [ ] **Longer eval context** — Evaluate with context > training length via position extrapolation.
 - [ ] **Ensembling within 16MB** — Multiple tiny models that vote? Probably not enough budget.
 
@@ -66,10 +66,10 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. ~~**Earlier QAT (threshold 0.20-0.25)**~~ — TRIED: 0.20 gave 1.1234, +0.0008 worse. More QAT hurts training quality AND doesn't reduce quant gap. 0.15 is optimal.
-2. **Speed optimization** — Hardware variance is 85.17-86.05 ms/step across runs. Getting consistently 85ms would add ~50 steps. Profile the gap.
-3. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
-4. **Vocabulary size optimization** — Larger vocab (2048, 4096) = fewer tokens = better BPB, but more embedding params.
+1. **TTT hyperparameter tuning** — Currently -0.0012 BPB. Target: -0.002. Try: lr=0.0002, 64K chunks, freeze first 4 blocks. Highest priority.
+2. ~~**Earlier QAT (threshold 0.20-0.25)**~~ — TRIED: 0.20 gave 1.1234, +0.0008 worse. 0.15 is optimal.
+3. **Speed optimization** — Hardware variance is 85.17-86.05 ms/step across runs. Getting consistently 85ms would add ~50 steps. Profile the gap.
+4. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
 5. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
 6. ~~**Disable QAT entirely**~~ — TRIED: 0.0 gave 1.1233, +0.0007 worse. QAT 0.15 is the sweet spot — helps both model quality and quant gap.
 
@@ -149,3 +149,5 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-27 | cosine_warmdown | 1.1236 | 15.69MB | **REGRESSED**: Cosine warmdown +0.001 BPB. Linear decay better for Muon optimizer. |
 | 2026-03-27 | leaky_relu_05_squared | **1.1207** | 15.55MB | **NEW BEST!** LeakyReLU(0.5)² -0.0019 BPB. Preserves negative gradient flow. |
 | 2026-03-28 | leaky_relu_07_squared | 1.1242 | — | **REGRESSED**: LeakyReLU(0.7)² +0.0035 BPB. Too symmetric; 0.5 is optimal slope. |
+| 2026-03-28 | ttt_legal_score_first_v2 | 1.1436 | 15.55MB | **REGRESSED**: TTT with SOTA defaults (lr=0.002, 3ep) catastrophic forgetting. |
+| 2026-03-28 | ttt_conservative_lr0005_ep1 | **1.1203** | 15.55MB | **NEW BEST!** TTT with lr=0.0005, 1ep: -0.0012 BPB improvement over sliding window. |

@@ -42,7 +42,7 @@ COST_PER_HOUR = 21.52
 
 # Timeouts
 POD_READY_TIMEOUT = 900  # 15 min to become ready (8xH100 can be slow)
-TRAINING_TIMEOUT = 1200  # 20 min max for training (10 min) + eval (~5 min) + buffer
+TRAINING_TIMEOUT = 1800  # 30 min max for training (10 min) + eval (~5 min) + TTT (~7 min) + buffer
 SETUP_TIMEOUT = 300      # 5 min for setup commands
 
 
@@ -173,7 +173,7 @@ def parse_training_log(log_text: str) -> dict:
             if m:
                 results["val_bpb"] = float(m.group(1))
 
-        if "Total submission size int8+zlib:" in line:
+        if "Total submission size" in line and "bytes" in line:
             m = re.search(r"(\d+) bytes", line)
             if m:
                 results["artifact_size_bytes"] = int(m.group(1))
