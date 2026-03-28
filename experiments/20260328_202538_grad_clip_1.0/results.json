@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89344948,
+  "val_bpb": 1.12141041,
+  "artifact_size_bytes": 15525513,
+  "train_time_ms": 600050,
+  "steps": 6898,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "grad_clip_1.0",
+  "experiment": "20260328_202538_grad_clip_1.0",
+  "pod_id": "tsa0t1uikhhqky",
+  "elapsed_min": 24.1,
+  "estimated_cost": 8.65
+}
