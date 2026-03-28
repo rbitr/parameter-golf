@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89323307,
+  "val_bpb": 1.12128223,
+  "artifact_size_bytes": 15894615,
+  "train_time_ms": 600007,
+  "steps": 6953,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "bigram1536_512d_noproj",
+  "experiment": "20260328_194300_bigram1536_512d_noproj",
+  "pod_id": "78pm6ar02lzsf4",
+  "elapsed_min": 24.9,
+  "estimated_cost": 8.92
+}

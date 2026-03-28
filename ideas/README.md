@@ -46,6 +46,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **Structured sparsity** — 2:4 or 4:8 structured sparsity for better compression ratios.
 - [ ] **Magnitude-aware pruning** — Prune by |q * scale| instead of |q|. Could save 100KB with minimal BPB impact.
 - [x] **BigramHash bucket tuning** — TRIED: 4096 buckets (vs 2048). RESULT: **+0.0018 BPB worse** (1.1244). Extra params undertrained at 7013 steps. 2048 is optimal.
+- [x] **BigramHash @512d (SOTA config)** — TRIED: 1536 buckets@512d, no projection (vs 2048@128d+proj). RESULT: **+0.001 BPB worse** (1.1217 base, 1.1213 TTT). TTT delta also worse (-0.0004 vs -0.0012). More params (786K vs 327K) undertrained. SOTA's bigram works only with their speed optimizations. Don't try larger bigrams without more steps.
 - [x] **Value Embedding layer count** — TRIED: VE on 8,9,10 (3 layers) vs 9,10 (2 layers). RESULT: +0.0015 BPB worse. Layer 8 too early for token identity. 9,10 is optimal.
 - [ ] **Vocabulary size optimization** — Larger vocab = fewer tokens = potentially better BPB, but more embedding params. Find the sweet spot.
 - [ ] **Knowledge distillation into quantized model** — Train large, distill into the 16MB target.
@@ -66,13 +67,14 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Speed optimization (Parameter Banking)** — SOTA gets 83.3ms/step vs our ~86ms by batching Linear layers into contiguous banks. ~200 more training steps. Medium complexity, confirmed zero quality impact by SOTA.
-2. **BigramHash @512d (1536 buckets)** — SOTA uses 1536 buckets at full 512d (no projection layer) vs our 2048@128d+proj. Much more expressive bigram features. May also improve TTT resilience. Need to check if artifact fits under 16MB.
+1. **Speed optimization (Parameter Banking)** — SOTA gets 83.3ms/step vs our ~86ms by batching Linear layers into contiguous banks. ~200 more training steps. Medium complexity, confirmed zero quality impact by SOTA. Now CRITICAL: bigram@512d needs more steps to work.
+2. ~~**BigramHash @512d (1536 buckets)**~~ — TRIED: +0.001 BPB worse. Undertrained at ~7000 steps. TTT delta also regressed (-0.0004 vs -0.0012). Needs Parameter Banking for more steps first.
 3. ~~**TTT 2 epochs at lr=0.0005**~~ — TRIED: delta=-0.0007, same as 1ep+anchor. Extra epoch causes forgetting. TTT tuning exhausted.
 4. ~~**Earlier QAT (threshold 0.20-0.25)**~~ — TRIED: 0.20 gave 1.1234, +0.0008 worse. 0.15 is optimal.
-5. **MoE (Mixture of Experts)** — 2-4 experts with top-1 routing. More capacity per parameter. Medium risk.
+5. **grad_clip_norm=1.0** — SOTA reportedly uses 1.0 vs our 0.3. Less aggressive clipping could help Muon optimizer. Simple one-line change.
 6. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
-6. ~~**Disable QAT entirely**~~ — TRIED: 0.0 gave 1.1233, +0.0007 worse. QAT 0.15 is the sweet spot — helps both model quality and quant gap.
+7. ~~**Disable QAT entirely**~~ — TRIED: 0.0 gave 1.1233, +0.0007 worse. QAT 0.15 is the sweet spot — helps both model quality and quant gap.
+8. **TTT with Adam optimizer** — Adam's per-param adaptive LR might prevent catastrophic forgetting better than SGD. Could improve TTT delta beyond -0.0012.
 
 ## Key Findings
 
@@ -156,3 +158,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-28 | ttt_anchor_alpha_0003 | **1.1200** | 15.55MB | **NEW BEST** absolute BPB but anchor reduces TTT delta (-0.0007 vs -0.0012). Improvement from base getting more steps (6976). |
 | 2026-03-28 | ttt_lr001_noanchor | 1.1204 | 15.55MB | **REGRESSED**: Higher TTT LR (0.001 vs 0.0005) reduces TTT delta from -0.025 to -0.024. TTT saturated at lr=0.0005. |
 | 2026-03-28 | ttt_2ep_lr0005 | **1.1198** | 15.56MB | **NEW BEST** absolute but TTT delta=-0.0007 (same as 1ep+anchor). 2 epochs causes forgetting, base improvement from run variance. |
+| 2026-03-28 | bigram1536_512d_noproj | 1.1213 | 15.89MB | **REGRESSED**: BigramHash 1536@512d (SOTA config) +0.0015 BPB. Undertrained + TTT delta only -0.0004. Needs more steps. |
