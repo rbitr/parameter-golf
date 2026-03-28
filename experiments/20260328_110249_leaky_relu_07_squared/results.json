@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89816203,
+  "val_bpb": 1.12420145,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600022,
+  "steps": 6622,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "leaky_relu_07_squared",
+  "experiment": "20260328_110249_leaky_relu_07_squared",
+  "pod_id": "a5ns0c7y3sv8s7",
+  "elapsed_min": 19.4,
+  "estimated_cost": 6.94
+}
