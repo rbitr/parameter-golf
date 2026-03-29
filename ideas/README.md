@@ -49,6 +49,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **Magnitude-aware pruning** — Prune by |q * scale| instead of |q|. Could save 100KB with minimal BPB impact.
 - [x] **BigramHash bucket tuning** — TRIED: 4096 buckets: **+0.0018 BPB worse** (undertrained). 3072 buckets: **-0.0002 base, tied TTT** (1.1198). TTT delta drops from -0.0012 to -0.0007 with 3072. Net wash. 2048 is optimal for our step count given TTT.
 - [x] **BigramHash @512d (SOTA config)** — TRIED: 1536 buckets@512d, no projection (vs 2048@128d+proj). RESULT: **+0.001 BPB worse** (1.1217 base, 1.1213 TTT). TTT delta also worse (-0.0004 vs -0.0012). More params (786K vs 327K) undertrained. SOTA's bigram works only with their speed optimizations. Don't try larger bigrams without more steps.
+- [x] **BigramHash 256d (doubled dim)** — TRIED: 2048 buckets@256d+proj (vs 128d+proj). RESULT: **+0.0002 base, +0.0003 TTT worse** (1.1209 base, 1.1201 TTT). TTT delta -0.0008 (vs -0.0012). Extra 328K params undertrained. **BigramHash is fully optimized at 2048×128d for ~7000 steps. Any expansion (buckets or dim) hurts. Dead end.**
 - [x] **Value Embedding layer count** — TRIED: VE on 8,9,10 (3 layers) vs 9,10 (2 layers). RESULT: +0.0015 BPB worse. Layer 8 too early for token identity. 9,10 is optimal.
 - [ ] **Vocabulary size optimization** — Larger vocab = fewer tokens = potentially better BPB, but more embedding params. Find the sweet spot.
 - [ ] **Knowledge distillation into quantized model** — Train large, distill into the 16MB target.
@@ -171,3 +172,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-29 | temp_sweep_eval | 1.1203 | 15.55MB | **NO IMPROVEMENT**: Temperature scaling T=[0.90-1.10] all worse than T=1.0. Model well-calibrated. Base=1.1212 (SW), TTT=1.1203. SwiGLU also tested locally: +0.007 BPB worse. |
 | 2026-03-29 | param_banking_parallel_muon | 1.1633 | 14.57MB | **CATASTROPHIC**: Removed DDP for parameter banks. 182ms/step (2.1x slower), only 3307 steps. Sequential gradient sync after backward. |
 | 2026-03-29 | bigram3072_brotli_ema098 | 1.1198 | 15.68MB | **TIED**: BigramHash 3072 buckets. Base improved -0.0002 (1.1205 vs 1.1207) but TTT delta dropped to -0.0007. Net wash. |
+| 2026-03-29 | bigram256d_brotli_ema098 | 1.1201 | 15.76MB | **REGRESSED**: BigramHash 256d (2x dim). Base +0.0002, TTT delta -0.0008 (vs -0.0012). Extra 328K params undertrained. BigramHash fully optimized. |
