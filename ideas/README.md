@@ -70,7 +70,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Priority Queue (next experiments)
 
-1. **Speed optimization (Parameter Banking)** — SOTA gets 83.3ms/step vs our ~86ms by batching Linear layers into contiguous banks. ~200 more training steps. Medium complexity, confirmed zero quality impact by SOTA. Now CRITICAL: bigram@512d needs more steps to work.
+1. ~~**Speed optimization (Parameter Banking)**~~ — TRIED: Replaced all nn.Linear with 4 contiguous banks, removed DDP for manual gradient sync. RESULT: **CATASTROPHIC — 182ms/step (2.1x slower), 3307 steps, val_bpb 1.1633**. Removing DDP eliminated critical communication-computation overlap. Forward pass was faster (~80ms steps 1-10) but sequential gradient sync after backward added ~100ms. **Simpler alternative: batch NS calls in Muon by grouping same-shape params, keep DDP.**
 2. ~~**BigramHash @512d (1536 buckets)**~~ — TRIED: +0.001 BPB worse. Undertrained at ~7000 steps. TTT delta also regressed (-0.0004 vs -0.0012). Needs Parameter Banking for more steps first.
 3. ~~**TTT 2 epochs at lr=0.0005**~~ — TRIED: delta=-0.0007, same as 1ep+anchor. Extra epoch causes forgetting. TTT tuning exhausted.
 4. ~~**Earlier QAT (threshold 0.20-0.25)**~~ — TRIED: 0.20 gave 1.1234, +0.0008 worse. 0.15 is optimal.

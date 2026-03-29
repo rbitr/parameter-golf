@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.96411088,
+  "val_bpb": 1.16326018,
+  "artifact_size_bytes": 14574644,
+  "train_time_ms": 603642,
+  "steps": 3307,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "param_banking_parallel_muon",
+  "experiment": "20260329_163808_param_banking_parallel_muon",
+  "pod_id": "8i9y53po06omlt",
+  "elapsed_min": 20.9,
+  "estimated_cost": 7.49
+}
