@@ -74,7 +74,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 5. ~~**grad_clip_norm=1.0**~~ — TRIED: +0.0007 BPB worse (1.1214). Helped locally but hurt at 8-GPU scale. 0.3 is optimal for DDP training.
 6. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
 7. ~~**Disable QAT entirely**~~ — TRIED: 0.0 gave 1.1233, +0.0007 worse. QAT 0.15 is the sweet spot — helps both model quality and quant gap.
-8. **TTT with Adam optimizer** — Adam's per-param adaptive LR might prevent catastrophic forgetting better than SGD. Could improve TTT delta beyond -0.0012.
+8. ~~**TTT with Adam optimizer**~~ — TRIED: Adam TTT lr=0.001 gave BPB 1.2620 (+0.1416 regression). Adam is catastrophically wrong for few-shot TTT — variance estimates are noisy with so few steps, causing massive uncontrolled updates. SGD with momentum is far superior for TTT.
 
 ## Key Findings
 
@@ -160,3 +160,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-28 | ttt_2ep_lr0005 | **1.1198** | 15.56MB | **NEW BEST** absolute but TTT delta=-0.0007 (same as 1ep+anchor). 2 epochs causes forgetting, base improvement from run variance. |
 | 2026-03-28 | bigram1536_512d_noproj | 1.1213 | 15.89MB | **REGRESSED**: BigramHash 1536@512d (SOTA config) +0.0015 BPB. Undertrained + TTT delta only -0.0004. Needs more steps. |
 | 2026-03-28 | grad_clip_1.0 | 1.1214 | 15.53MB | **REGRESSED**: grad_clip 1.0 vs 0.3 (+0.0007 BPB). Helped locally but hurt at 8-GPU scale. 0.3 is optimal. |
+| 2026-03-29 | ttt_adam_lr001 | 1.2620 | 15.55MB | **REGRESSED**: Adam TTT catastrophic (+0.1416 BPB). Base=1.1204 (fine), Adam destroys generalization in few-shot TTT. SGD is correct for TTT. |

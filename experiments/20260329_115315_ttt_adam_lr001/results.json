@@ -1,0 +1,14 @@
+{
+  "val_loss": 2.13077508,
+  "val_bpb": 1.26196836,
+  "artifact_size_bytes": 15551437,
+  "train_time_ms": 600052,
+  "steps": 6964,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ttt_adam_lr001",
+  "experiment": "20260329_115315_ttt_adam_lr001",
+  "pod_id": "xh99w1qyjlg7zv",
+  "elapsed_min": 24.3,
+  "estimated_cost": 8.73
+}
