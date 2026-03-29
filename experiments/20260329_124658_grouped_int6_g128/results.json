@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89103236,
+  "val_bpb": 1.11997885,
+  "artifact_size_bytes": 15564643,
+  "train_time_ms": 600058,
+  "steps": 6964,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "grouped_int6_g128",
+  "experiment": "20260329_124658_grouped_int6_g128",
+  "pod_id": "k5tpb4vjy31w56",
+  "elapsed_min": 24.8,
+  "estimated_cost": 8.89
+}

@@ -32,7 +32,8 @@
 - 2 epochs at lr=0.0005: delta=-0.0007 (same as 1ep+anchor, worse than 1ep no-anchor)
 - 1 epoch at lr=0.0005: delta=-0.0012 (best delta)
 - Anchor alpha=0.0003: delta=-0.0007 (no benefit)
-- SOTA gets -0.0021 due to architectural differences (Parameter Banking, BigramHash@512d)
+- **CORRECTED: SOTA TTT delta is only -0.0004** (from ablation table). The -0.0021 was LeakyReLU ablation, not TTT.
+- Our TTT (-0.0012) is actually BETTER than SOTA's (-0.0004)
 - **Focus on base model improvements, TTT is capped**
 
 ## Previous Innovation: LeakyReLU(0.5)²
@@ -46,8 +47,15 @@
 ## Leaderboard SOTA (for reference)
 - **1.1194 BPB** — LeakyReLU² + Legal TTT + Parallel Muon (2026-03-23)
 - Our gap: +0.0004 BPB (down from +0.0006)
-- SOTA gets -0.0021 from TTT; we get -0.0007 to -0.0012
-- SOTA key differences: Parameter Banking (83.3ms/step), BigramHash 1536@512d (full dim, no proj), TTT lr=0.002/3ep (tolerates aggressive settings), EMA 0.997+SWA, GPTQ+lzma
+- **CORRECTED SOTA ablation**: LeakyReLU=-0.0021, BigramHash=-0.0009, TTT=-0.0004
+- SOTA base (sliding window): ~1.1198, our base: ~1.1207. Gap is -0.0009 = BigramHash expansion
+- SOTA TTT delta: -0.0004, our TTT delta: -0.0012 (we're better!)
+- SOTA key differences: Parameter Banking (83.3ms/step, +200 steps), BigramHash 1536d (full dim, -0.0009), EMA 0.997+SWA, GPTQ+lzma
+
+## Dead Ends (confirmed no improvement)
+- Grouped int6 quantization (G=128): -0.0001 BPB (noise). Per-row already optimal.
+- eval_seq_len=4096: CATASTROPHIC (1.5502 BPB). RoPE 4x extrapolation fails.
+- eval_seq_len > 2048: Don't try without training at that length.
 
 ## Infrastructure Notes
 - RunPod template has FA3 pre-installed (no pip install needed)

@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89128843,
+  "val_bpb": 1.1201305,
+  "artifact_size_bytes": 15549111,
+  "train_time_ms": 600032,
+  "steps": 6933,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "eval_seq4096_ntk_extrap",
+  "experiment": "20260329_132754_eval_seq4096_ntk_extrap",
+  "pod_id": "v4bkzhzv0c76ht",
+  "elapsed_min": 25.9,
+  "estimated_cost": 9.28
+}

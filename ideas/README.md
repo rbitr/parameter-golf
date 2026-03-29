@@ -42,7 +42,8 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [-] **QAT from the start** — Abandoned: too expensive (model can't learn with full quantization noise from step 0).
 - [-] **Int4/Int5 for some tensors** — Abandoned: int5 MLP experiment showed quantization error is too large.
 - [-] **Aggressive post-quant pruning** — Abandoned: zeroing all ±1 quantized values saves 1.82MB but destroys BPB (+0.02). Need magnitude-aware pruning but code complexity is high.
-- [ ] **Better compression** — zstd-22 vs brotli vs custom schemes. The compressor matters.
+- [x] **Better compression** — brotli-10 beats zstd-22 by 380-645KB. Already implemented and optimal.
+- [x] **Grouped int6 quantization (G=128)** — TRIED: per-group scales (128 weights/group). RESULT: -0.0001 BPB on sliding window (noise). Artifact 3KB larger. Per-row GPTQ-lite already near-optimal. Muon produces approximately orthogonal weights with low within-row variance. **Not worth the complexity.**
 - [ ] **Structured sparsity** — 2:4 or 4:8 structured sparsity for better compression ratios.
 - [ ] **Magnitude-aware pruning** — Prune by |q * scale| instead of |q|. Could save 100KB with minimal BPB impact.
 - [x] **BigramHash bucket tuning** — TRIED: 4096 buckets (vs 2048). RESULT: **+0.0018 BPB worse** (1.1244). Extra params undertrained at 7013 steps. 2048 is optimal.
@@ -54,8 +55,8 @@ Evolving list of ideas to explore. Mark with status as you go:
 ## Evaluation
 
 - [x] **Sliding window stride optimization** — TRIED stride=32 vs stride=64. RESULT: Only 0.00003 BPB difference. Not worth the 2x eval time. Stride=64 is optimal.
-- [x] **Test-time training (TTT)** — TRIED: Full-model SGD TTT. SOTA defaults (lr=0.002, 3ep) caused catastrophic forgetting (+0.023 BPB). Conservative (lr=0.0005, 1ep) gives **-0.0012 BPB** (best delta). lr=0.001: -0.0010. Freeze 6 blocks: +0.0005 worse. Anchor alpha=0.0003: delta=-0.0007. **2 epochs at lr=0.0005: delta=-0.0007** (extra epoch causes forgetting, no net gain). TTT saturated at -0.0007 to -0.0012 for our model. SOTA gets -0.0021 via architectural resilience (Parameter Banking, BigramHash@512d). **TTT tuning exhausted.**
-- [ ] **Longer eval context** — Evaluate with context > training length via position extrapolation.
+- [x] **Test-time training (TTT)** — TRIED: Full-model SGD TTT. SOTA defaults (lr=0.002, 3ep) caused catastrophic forgetting (+0.023 BPB). Conservative (lr=0.0005, 1ep) gives **-0.0012 BPB** (best delta). lr=0.001: -0.0010. Freeze 6 blocks: +0.0005 worse. Anchor alpha=0.0003: delta=-0.0007. **2 epochs at lr=0.0005: delta=-0.0007** (extra epoch causes forgetting, no net gain). TTT saturated at -0.0007 to -0.0012 for our model. **CORRECTED: SOTA TTT delta is only -0.0004 (not -0.0021). Our TTT is actually BETTER.** The -0.0021 in SOTA ablation was for LeakyReLU, not TTT. **TTT tuning exhausted.**
+- [x] **Longer eval context (4096)** — TRIED: eval_seq_len=4096 with NTK RoPE extrapolation (1024→4096, 4x). RESULT: **Sliding window CATASTROPHIC: 1.5502 BPB** (vs 1.1203 at 2048). RoPE NTK extrapolation fails at 4x even with 75% position-independent attention. Don't try eval_seq > 2048 without training at that length.
 - [ ] **Ensembling within 16MB** — Multiple tiny models that vote? Probably not enough budget.
 
 ## Meta
@@ -161,3 +162,5 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-28 | bigram1536_512d_noproj | 1.1213 | 15.89MB | **REGRESSED**: BigramHash 1536@512d (SOTA config) +0.0015 BPB. Undertrained + TTT delta only -0.0004. Needs more steps. |
 | 2026-03-28 | grad_clip_1.0 | 1.1214 | 15.53MB | **REGRESSED**: grad_clip 1.0 vs 0.3 (+0.0007 BPB). Helped locally but hurt at 8-GPU scale. 0.3 is optimal. |
 | 2026-03-29 | ttt_adam_lr001 | 1.2620 | 15.55MB | **REGRESSED**: Adam TTT catastrophic (+0.1416 BPB). Base=1.1204 (fine), Adam destroys generalization in few-shot TTT. SGD is correct for TTT. |
+| 2026-03-29 | grouped_int6_g128 | 1.1200 | 15.56MB | **NO IMPROVEMENT**: Grouped quant (G=128) gives -0.0001 on SW (noise). Per-row already optimal for orthogonal Muon weights. |
+| 2026-03-29 | eval_seq4096_ntk_extrap | 1.1201 | 15.55MB | **REGRESSED**: 4096 eval context via NTK RoPE extrapolation. SW=1.5502 (catastrophic). 4x extrapolation fails. TTT unaffected (uses 2048). |

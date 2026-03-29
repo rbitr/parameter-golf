@@ -1163,10 +1163,10 @@ def mixed_quantize_int6(state_dict: dict[str, Tensor], int6_cats: set[str]):
             meta[name] = "passthrough_ctrl"
             continue
         if cat in int6_cats and t.ndim >= 1:
-            q, s = quantize_int6_per_row(t)
+            q, s = quantize_int6_grouped(t)
             result[name + ".q"] = q
             result[name + ".scale"] = s
-            meta[name] = {"type": "int6"}
+            meta[name] = {"type": "int6", "grouped": s.ndim > 1}
         else:
             q, s = quantize_float_tensor(t)
             result[name + ".q"] = q
@@ -1188,7 +1188,16 @@ def dequantize_mixed_int6(result: dict[str, Tensor], meta: dict[str, object],
             out[name] = t
             continue
         q, s = result[name + ".q"], result[name + ".scale"]
-        if s.ndim > 0:
+        info_dict = info if isinstance(info, dict) else {}
+        if info_dict.get("grouped") and s.ndim == 2 and q.ndim == 2:
+            # Grouped dequantization: s is (rows, num_groups), q is (rows, cols)
+            rows, cols = q.shape
+            num_groups = s.shape[1]
+            group_size = cols // num_groups
+            q_g = q.reshape(rows, num_groups, group_size).float()
+            s_g = s.float().unsqueeze(2)  # (rows, num_groups, 1)
+            out[name] = (q_g * s_g).reshape(rows, cols).to(orig_dtype)
+        elif s.ndim > 0:
             out[name] = (q.float() * s.float().view(q.shape[0], *([1] * (q.ndim - 1)))).to(orig_dtype)
         else:
             out[name] = (q.float() * float(s.item())).to(orig_dtype)
