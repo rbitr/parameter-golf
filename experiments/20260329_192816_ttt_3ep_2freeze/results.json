@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89259427,
+  "val_bpb": 1.1209039,
+  "artifact_size_bytes": 15554014,
+  "train_time_ms": 600007,
+  "steps": 6986,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "ttt_3ep_2freeze",
+  "experiment": "20260329_192816_ttt_3ep_2freeze",
+  "pod_id": "i1f3xg3sqzdkfe",
+  "elapsed_min": 25.4,
+  "estimated_cost": 9.1
+}
