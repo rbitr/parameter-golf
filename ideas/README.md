@@ -47,7 +47,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [x] **Grouped int6 quantization (G=128)** — TRIED: per-group scales (128 weights/group). RESULT: -0.0001 BPB on sliding window (noise). Artifact 3KB larger. Per-row GPTQ-lite already near-optimal. Muon produces approximately orthogonal weights with low within-row variance. **Not worth the complexity.**
 - [ ] **Structured sparsity** — 2:4 or 4:8 structured sparsity for better compression ratios.
 - [ ] **Magnitude-aware pruning** — Prune by |q * scale| instead of |q|. Could save 100KB with minimal BPB impact.
-- [x] **BigramHash bucket tuning** — TRIED: 4096 buckets (vs 2048). RESULT: **+0.0018 BPB worse** (1.1244). Extra params undertrained at 7013 steps. 2048 is optimal.
+- [x] **BigramHash bucket tuning** — TRIED: 4096 buckets: **+0.0018 BPB worse** (undertrained). 3072 buckets: **-0.0002 base, tied TTT** (1.1198). TTT delta drops from -0.0012 to -0.0007 with 3072. Net wash. 2048 is optimal for our step count given TTT.
 - [x] **BigramHash @512d (SOTA config)** — TRIED: 1536 buckets@512d, no projection (vs 2048@128d+proj). RESULT: **+0.001 BPB worse** (1.1217 base, 1.1213 TTT). TTT delta also worse (-0.0004 vs -0.0012). More params (786K vs 327K) undertrained. SOTA's bigram works only with their speed optimizations. Don't try larger bigrams without more steps.
 - [x] **Value Embedding layer count** — TRIED: VE on 8,9,10 (3 layers) vs 9,10 (2 layers). RESULT: +0.0015 BPB worse. Layer 8 too early for token identity. 9,10 is optimal.
 - [ ] **Vocabulary size optimization** — Larger vocab = fewer tokens = potentially better BPB, but more embedding params. Find the sweet spot.
@@ -76,6 +76,8 @@ Evolving list of ideas to explore. Mark with status as you go:
 4. ~~**Earlier QAT (threshold 0.20-0.25)**~~ — TRIED: 0.20 gave 1.1234, +0.0008 worse. 0.15 is optimal.
 5. ~~**grad_clip_norm=1.0**~~ — TRIED: +0.0007 BPB worse (1.1214). Helped locally but hurt at 8-GPU scale. 0.3 is optimal for DDP training.
 6. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
+9. **TTT 3ep + 2 frozen blocks at lr=0.0005** — SOTA uses 3ep with 2 frozen blocks. We tried 6 frozen (too many, -0.0005) and 0 frozen multi-epoch (forgetting, -0.0005). 2 frozen might prevent early-layer forgetting while allowing deeper layers to adapt over 3 epochs. Could improve TTT delta from -0.0012 to -0.0021 (matching SOTA).
+10. **Batched NS in Muon (keep DDP)** — Group same-shape params for batched Newton-Schulz via torch.bmm. Reduces kernel launches from ~44 to ~4 without touching DDP. Could save 2-3ms/step → ~150 more steps.
 7. ~~**Disable QAT entirely**~~ — TRIED: 0.0 gave 1.1233, +0.0007 worse. QAT 0.15 is the sweet spot — helps both model quality and quant gap.
 8. ~~**TTT with Adam optimizer**~~ — TRIED: Adam TTT lr=0.001 gave BPB 1.2620 (+0.1416 regression). Adam is catastrophically wrong for few-shot TTT — variance estimates are noisy with so few steps, causing massive uncontrolled updates. SGD with momentum is far superior for TTT.
 
@@ -167,3 +169,5 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-29 | grouped_int6_g128 | 1.1200 | 15.56MB | **NO IMPROVEMENT**: Grouped quant (G=128) gives -0.0001 on SW (noise). Per-row already optimal for orthogonal Muon weights. |
 | 2026-03-29 | eval_seq4096_ntk_extrap | 1.1201 | 15.55MB | **REGRESSED**: 4096 eval context via NTK RoPE extrapolation. SW=1.5502 (catastrophic). 4x extrapolation fails. TTT unaffected (uses 2048). |
 | 2026-03-29 | temp_sweep_eval | 1.1203 | 15.55MB | **NO IMPROVEMENT**: Temperature scaling T=[0.90-1.10] all worse than T=1.0. Model well-calibrated. Base=1.1212 (SW), TTT=1.1203. SwiGLU also tested locally: +0.007 BPB worse. |
+| 2026-03-29 | param_banking_parallel_muon | 1.1633 | 14.57MB | **CATASTROPHIC**: Removed DDP for parameter banks. 182ms/step (2.1x slower), only 3307 steps. Sequential gradient sync after backward. |
+| 2026-03-29 | bigram3072_brotli_ema098 | 1.1198 | 15.68MB | **TIED**: BigramHash 3072 buckets. Base improved -0.0002 (1.1205 vs 1.1207) but TTT delta dropped to -0.0007. Net wash. |

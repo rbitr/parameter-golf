@@ -77,3 +77,4 @@
 | 2026-03-29 13:53 | eval_seq4096_ntk_extrap | 25.9 min | $9.28 | $389.26 |
 | 2026-03-29 15:42 | temp_sweep_eval | 29.8 min | $10.69 | $399.95 |
 | 2026-03-29 16:59 | param_banking_parallel_muon | 20.9 min | $7.49 | $407.44 |
+| 2026-03-29 17:56 | bigram3072_brotli_ema098 | 22.6 min | $8.12 | $415.56 |
