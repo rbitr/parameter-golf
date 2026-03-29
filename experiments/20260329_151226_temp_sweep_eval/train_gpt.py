@@ -1662,6 +1662,21 @@ def main() -> None:
         )
         log0(f"final_int6_sliding_window_s64_exact val_loss:{sw64_val_loss:.8f} val_bpb:{sw64_val_bpb:.8f}")
         log0(f"final_int8_zlib_roundtrip_exact val_loss:{sw64_val_loss:.8f} val_bpb:{sw64_val_bpb:.8f}")
+    # --- Temperature sweep on sliding window ---
+    if args.eval_stride > 0 and args.eval_stride < sw_seq_len:
+        for temp in [0.90, 0.95, 1.05, 1.10]:
+            torch.cuda.synchronize()
+            t_temp = time.perf_counter()
+            temp_loss, temp_bpb = eval_val_sliding(
+                args, eval_model, rank, world_size, device,
+                val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
+                stride=args.eval_stride, eval_seq_len=sw_seq_len, temperature=temp,
+            )
+            torch.cuda.synchronize()
+            log0(
+                f"temp_sweep T={temp:.2f} val_loss:{temp_loss:.4f} val_bpb:{temp_bpb:.4f} "
+                f"eval_time:{1000.0 * (time.perf_counter() - t_temp):.0f}ms"
+            )
     # --- TTT (test-time training) evaluation ---
     if args.ttt_enabled and args.eval_stride > 0:
         torch.cuda.synchronize()

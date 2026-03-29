@@ -16,6 +16,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [x] **Alternative activation functions** — TRIED: LeakyReLU(0.5)²: **-0.0019 BPB** (1.1207). LeakyReLU(0.7)²: **+0.0035 BPB** (1.1242, worse than ReLU!). Optimum near 0.5. Slope² determines negative weight: 0.5→0.25 is the sweet spot. Could try 0.3 but unlikely to beat 0.5.
 - [ ] **Factored embeddings** — Low-rank embedding matrix to save parameters, especially if increasing vocab size.
 - [ ] **Mixture of depths** — Skip some layers for some tokens via a learned router.
+- [x] **SwiGLU MLP activation** — TRIED: SwiGLU (gate+up+down at matched params, hidden=1024 vs 1536). RESULT: **+0.007 BPB worse** locally at 100 steps. The 2/3 width reduction hurts more than gating helps at this model size. LeakyReLU(0.5)² is optimal.
 
 ## Training
 
@@ -58,6 +59,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [x] **Test-time training (TTT)** — TRIED: Full-model SGD TTT. SOTA defaults (lr=0.002, 3ep) caused catastrophic forgetting (+0.023 BPB). Conservative (lr=0.0005, 1ep) gives **-0.0012 BPB** (best delta). lr=0.001: -0.0010. Freeze 6 blocks: +0.0005 worse. Anchor alpha=0.0003: delta=-0.0007. **2 epochs at lr=0.0005: delta=-0.0007** (extra epoch causes forgetting, no net gain). TTT saturated at -0.0007 to -0.0012 for our model. **CORRECTED: SOTA TTT delta is only -0.0004 (not -0.0021). Our TTT is actually BETTER.** The -0.0021 in SOTA ablation was for LeakyReLU, not TTT. **TTT tuning exhausted.**
 - [x] **Longer eval context (4096)** — TRIED: eval_seq_len=4096 with NTK RoPE extrapolation (1024→4096, 4x). RESULT: **Sliding window CATASTROPHIC: 1.5502 BPB** (vs 1.1203 at 2048). RoPE NTK extrapolation fails at 4x even with 75% position-independent attention. Don't try eval_seq > 2048 without training at that length.
 - [ ] **Ensembling within 16MB** — Multiple tiny models that vote? Probably not enough budget.
+- [x] **Temperature scaling** — TRIED: Sweep T=[0.90, 0.95, 1.00, 1.05, 1.10] on sliding window eval. RESULT: **T=1.0 is optimal.** T=0.90: +0.010 BPB worse. T=0.95: +0.003. T=1.05: +0.0005. Model is well-calibrated. The ternary entry's T=0.90 was specific to ternary quantization's under-confidence. **Dead end.**
 
 ## Meta
 
@@ -164,3 +166,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-29 | ttt_adam_lr001 | 1.2620 | 15.55MB | **REGRESSED**: Adam TTT catastrophic (+0.1416 BPB). Base=1.1204 (fine), Adam destroys generalization in few-shot TTT. SGD is correct for TTT. |
 | 2026-03-29 | grouped_int6_g128 | 1.1200 | 15.56MB | **NO IMPROVEMENT**: Grouped quant (G=128) gives -0.0001 on SW (noise). Per-row already optimal for orthogonal Muon weights. |
 | 2026-03-29 | eval_seq4096_ntk_extrap | 1.1201 | 15.55MB | **REGRESSED**: 4096 eval context via NTK RoPE extrapolation. SW=1.5502 (catastrophic). 4x extrapolation fails. TTT unaffected (uses 2048). |
+| 2026-03-29 | temp_sweep_eval | 1.1203 | 15.55MB | **NO IMPROVEMENT**: Temperature scaling T=[0.90-1.10] all worse than T=1.0. Model well-calibrated. Base=1.1212 (SW), TTT=1.1203. SwiGLU also tested locally: +0.007 BPB worse. |

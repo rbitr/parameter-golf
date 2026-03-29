@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89156328,
+  "val_bpb": 1.12029329,
+  "artifact_size_bytes": 15554533,
+  "train_time_ms": 600032,
+  "steps": 6943,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "temp_sweep_eval",
+  "experiment": "20260329_151226_temp_sweep_eval",
+  "pod_id": "lyk7h1bjxly50j",
+  "elapsed_min": 29.8,
+  "estimated_cost": 10.69
+}
