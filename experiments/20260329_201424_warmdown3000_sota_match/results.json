@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.8919549,
+  "val_bpb": 1.12052523,
+  "artifact_size_bytes": 15719212,
+  "train_time_ms": 600081,
+  "steps": 6967,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "warmdown3000_sota_match",
+  "experiment": "20260329_201424_warmdown3000_sota_match",
+  "pod_id": "w3kue8t83t2h1a",
+  "elapsed_min": 23.2,
+  "estimated_cost": 8.32
+}

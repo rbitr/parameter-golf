@@ -21,7 +21,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 ## Training
 
 - [ ] **Curriculum learning** — Start with shorter sequences, ramp up to 2048. May help early training efficiency.
-- [x] **Warmdown iters tuning** — TRIED: 3500→3800. RESULT: **+0.0002 BPB worse**, artifact OVER 16MB. 3500 is near-optimal; 54% warmdown is too much.
+- [x] **Warmdown iters tuning** — TRIED: 3500→3800: **+0.0002 BPB worse**, artifact OVER 16MB. 3500→3000 (SOTA config): **+0.0004 BPB worse** (1.1211 base), TTT delta halved (-0.0006 vs -0.0012). EMA 0.998 needs longer warmdown. **3500 is optimal. Fully characterized: 3000 < 3500 > 3800.**
 - [x] **EMA decay tuning** — TRIED: 0.997→0.998: **-0.0006 BPB better** (1.1226). 0.999: **+0.0067 BPB worse** (1.1293). Optimum is 0.998. Not monotonic — 0.999 averages too much outdated history.
 - [x] **EMA+SWA blend** — TRIED: blend averaging at various alphas. RESULT: Pure EMA is best at scale (alpha=1.0). SWA adds no value AND costs ~1ms/step. Disabling SWA + EMA 0.998 = optimal.
 - [x] **Brotli compression** — TRIED: brotli quality 10 vs zstd-22. RESULT: **Saves 380-645KB** across all models. Key unlock for EMA 0.998. Decompression <1s.
@@ -174,3 +174,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-29 | bigram3072_brotli_ema098 | 1.1198 | 15.68MB | **TIED**: BigramHash 3072 buckets. Base improved -0.0002 (1.1205 vs 1.1207) but TTT delta dropped to -0.0007. Net wash. |
 | 2026-03-29 | bigram256d_brotli_ema098 | 1.1201 | 15.76MB | **REGRESSED**: BigramHash 256d (2x dim). Base +0.0002, TTT delta -0.0008 (vs -0.0012). Extra 328K params undertrained. BigramHash fully optimized. |
 | 2026-03-29 | ttt_3ep_2freeze | 1.1209 | 15.55MB | **REGRESSED**: TTT 3ep+2freeze (SOTA config). TTT delta=+0.0003 (WORSE than no TTT!). 9 unfrozen blocks overfit with 3 epochs. All TTT configs exhausted. |
+| 2026-03-29 | warmdown3000_sota_match | 1.1205 | 15.72MB | **REGRESSED**: warmdown 3000 (SOTA config) vs 3500. Base 1.1211 (+0.0004), TTT delta -0.0006 (halved). EMA 0.998 needs longer warmdown. 3500 is optimal. |
