@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89607691,
+  "val_bpb": 1.12296652,
+  "artifact_size_bytes": 15268459,
+  "train_time_ms": 600060,
+  "steps": 6929,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "matrix_lr_002",
+  "experiment": "20260330_172458_matrix_lr_002",
+  "pod_id": "6696snjtyrpfup",
+  "elapsed_min": 24.8,
+  "estimated_cost": 8.89
+}

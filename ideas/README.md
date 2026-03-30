@@ -82,7 +82,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 5. ~~**grad_clip_norm=1.0**~~ — TRIED: +0.0007 BPB worse (1.1214). Helped locally but hurt at 8-GPU scale. 0.3 is optimal for DDP training.
 6. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
 12. **Compression study results** — Tested lzma, byte-shuffling, int6 bit-packing, delta encoding, bit-plane decomposition, sign-magnitude split on real WD=0.03/0.04 models. **ALL worse than brotli-10 on int8**. Brotli-10 is near-optimal for our data. WD=0.03 weights are fundamentally higher entropy. Compression is a dead end.
-13. **matrix_lr tuning** — UNTRIED. matrix_lr=0.025 (from SOTA). Could try 0.020 or 0.030. Highest-leverage single hyperparameter.
+13. ~~**matrix_lr tuning**~~ — TRIED: matrix_lr=0.020 (down from 0.025): **+0.0023 BPB worse** (1.1230). Underfits at ~7000 steps. Could still try 0.030 (higher) since WD experiments showed model likes larger weights.
 9. ~~**TTT 3ep + 2 frozen blocks at lr=0.0005**~~ — TRIED: delta=+0.0003 (WORSE). 9 unfrozen blocks overfit with 3 epochs. SOTA's model handles this because of stronger base. All TTT configs exhausted.
 11. ~~**TTT freeze=2, lr=0.001, 2ep**~~ — TRIED: delta=+0.0019 (WORSE). Forgetting starts by chunk 50, catastrophic by chunk 200. Cosine LR decay helps but can't prevent early damage. TTT fully exhausted.
 10. **Batched NS in Muon (keep DDP)** — Group same-shape params for batched Newton-Schulz via torch.bmm. Reduces kernel launches from ~44 to ~4 without touching DDP. Could save 2-3ms/step → ~150 more steps.
@@ -194,3 +194,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-30 | muon_wd_003 | **1.1187** | 16.52MB (OVER) | **OVER by 517KB**: BPB same as WD=0.02 (plateau). Need WD=0.035 to fit under 16MB. |
 | 2026-03-30 | muon_wd_0035 | 1.1196 | 16.01MB (OVER) | **OVER by 9KB**: Base 1.1204 (same as 0.04!). BPB cliff between 0.03-0.035. WD tuning dead end. |
 | 2026-03-30 | ttt_freeze2_lr001_2ep | 1.1230 | 15.55MB | **REGRESSED**: TTT freeze=2, lr=0.001, 2ep. TTT delta=+0.0019 (catastrophic). Base 1.1211. Forgetting starts at chunk 50. All TTT configs exhausted. |
+| 2026-03-30 | matrix_lr_002 | 1.1230 | 15.27MB | **REGRESSED**: matrix_lr 0.02 (down from 0.025) +0.0023 BPB. Underfits at ~7000 steps. 0.025 is optimal for our step budget. |
