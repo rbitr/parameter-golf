@@ -5,3 +5,7 @@ Agent: Good catch. The issue is that local tests with TTT evaluation enabled are
 Human: Can you check what justh happened? I'm going to ctrl-c it again, it looks like the commit is done and a local GPU job continues to run for some time.
 
 Agent: Found and killed a stale local training process (PID 36763) that was still running from a previous session. It had been running for ~70 min using 22GB GPU memory. The issue is that local_test.sh runs in the background and isn't always killed when the agent session ends. I will always explicitly kill any local test processes before committing and exiting. Fix: I'll check for and kill training processes at the START of each session too.
+
+Human: Just had to ctrl-c again
+
+Agent: Found and killed another stale process (PID 28159, running 90+ min, 22GB GPU). This keeps happening because local_test.sh spawns torchrun which doesn't get killed when the agent session ends. I now kill ALL training processes at the START of every session as the very first action. I also need to ensure I kill them before committing. Will add explicit cleanup to my workflow.

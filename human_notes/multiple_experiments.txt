@@ -9,3 +9,5 @@ Agent: Acknowledged. Going forward: one experiment per session. This session's p
 Human: This clearly is being ignored
 
 Agent: Understood, and I apologize. Strictly one experiment per session from now on. Plan → local test → RunPod (if warranted) → record → commit → exit. No exceptions.
+
+Human: In the last session, I think you ran out of context, and then when you cleared the context didn't keep all of the instrutions? It's been going for a long time without saving the result in the ideas folder, and appeats to be trying multiple experiments. I'm going to stop it manually soon, look at the logs to see what happened and don't do this again.

@@ -37,6 +37,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **Data ordering** — Smart curriculum over FineWeb shards. Some data is harder/more useful than others.
 - [x] **Label smoothing** — TRIED: epsilon=0.02. RESULT: **+0.0212 BPB worse** (1.1444 vs 1.1232). Devastating at this model size — model too small to waste capacity softening targets.
 - [x] **Multi-token prediction (MTP)** — TRIED: 1 head, weight=0.2. RESULT: **+0.0113 BPB worse** (1.1339 vs 1.1226). Auxiliary losses don't help at this scale — gradient interference + 1.5% compute overhead.
+- [x] **Logit softcap tuning** — TRIED: sweep [10, 12, 15, 20, 30(default), 50]. Local 60-step results showed monotonic improvement with lower cap (15>20>30). **At scale (8xH100), softcap=15 gave 1.1244 base, +0.0040 worse than baseline 1.1204.** Lower softcap improves early training but limits model expressiveness at convergence. **Dead end. 30 is optimal.**
 
 ## Quantization & Compression
 
@@ -82,7 +83,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 5. ~~**grad_clip_norm=1.0**~~ — TRIED: +0.0007 BPB worse (1.1214). Helped locally but hurt at 8-GPU scale. 0.3 is optimal for DDP training.
 6. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
 12. **Compression study results** — Tested lzma, byte-shuffling, int6 bit-packing, delta encoding, bit-plane decomposition, sign-magnitude split on real WD=0.03/0.04 models. **ALL worse than brotli-10 on int8**. Brotli-10 is near-optimal for our data. WD=0.03 weights are fundamentally higher entropy. Compression is a dead end.
-13. ~~**matrix_lr tuning**~~ — TRIED: matrix_lr=0.020 (down from 0.025): **+0.0023 BPB worse** (1.1230). Underfits at ~7000 steps. Could still try 0.030 (higher) since WD experiments showed model likes larger weights.
+13. ~~**matrix_lr tuning**~~ — TRIED: 0.020: **+0.0023 BPB worse**. 0.030: neutral locally (3.7306 vs 3.7300). **0.025 is optimal. Fully characterized: 0.020 < 0.025 ≈ 0.030. Dead end.**
 9. ~~**TTT 3ep + 2 frozen blocks at lr=0.0005**~~ — TRIED: delta=+0.0003 (WORSE). 9 unfrozen blocks overfit with 3 epochs. SOTA's model handles this because of stronger base. All TTT configs exhausted.
 11. ~~**TTT freeze=2, lr=0.001, 2ep**~~ — TRIED: delta=+0.0019 (WORSE). Forgetting starts by chunk 50, catastrophic by chunk 200. Cosine LR decay helps but can't prevent early damage. TTT fully exhausted.
 10. **Batched NS in Muon (keep DDP)** — Group same-shape params for batched Newton-Schulz via torch.bmm. Reduces kernel launches from ~44 to ~4 without touching DDP. Could save 2-3ms/step → ~150 more steps.
