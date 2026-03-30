@@ -30,8 +30,9 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [-] **Larger batch size** — Abandoned: smaller batch already regressed; larger would give too few steps. 786K is the sweet spot.
 - [-] **Gradient accumulation tweaks** — Abandoned: batch size experiment shows 786K is well-optimized.
 - [x] **Muon weight decay tuning** — TRIED: WD=0.02 (half of 0.04). RESULT: **-0.0021 BPB (1.1186 vs 1.1207) but artifact 17.58MB (OVER 16MB)**. Lower WD = larger weights = worse compression. Need WD ~0.03-0.035 sweet spot. **HIGH PRIORITY: biggest BPB improvement found.**
-- [ ] **Muon WD=0.03 (compromise)** — Expected: ~1.1196 BPB, ~16.5MB? Need to test if it fits under 16MB.
-- [ ] **Muon WD=0.025** — Finer-grained tuning between 0.02 and 0.03.
+- [x] **Muon WD=0.03 (compromise)** — TRIED: BPB 1.1187 (same as 0.02!), 16.52MB (OVER by 517KB). BPB plateaus 0.02-0.03.
+- [ ] **Muon WD=0.035** — Interpolated: ~16.0MB, ~1.1197 BPB. HIGH PRIORITY.
+- [-] **Muon WD=0.025** — Abandoned: 0.03 already same BPB as 0.02, going lower won't help. Need higher WD for size.
 - [ ] **Different optimizers** — SOAP, Lion, Adalayer. Muon works well but alternatives exist.
 - [ ] **Data ordering** — Smart curriculum over FineWeb shards. Some data is harder/more useful than others.
 - [x] **Label smoothing** — TRIED: epsilon=0.02. RESULT: **+0.0212 BPB worse** (1.1444 vs 1.1232). Devastating at this model size — model too small to waste capacity softening targets.
@@ -85,12 +86,13 @@ Evolving list of ideas to explore. Mark with status as you go:
 7. ~~**Disable QAT entirely**~~ — TRIED: 0.0 gave 1.1233, +0.0007 worse. QAT 0.15 is the sweet spot — helps both model quality and quant gap.
 8. ~~**TTT with Adam optimizer**~~ — TRIED: Adam TTT lr=0.001 gave BPB 1.2620 (+0.1416 regression). Adam is catastrophically wrong for few-shot TTT — variance estimates are noisy with so few steps, causing massive uncontrolled updates. SGD with momentum is far superior for TTT.
 
-### Muon weight decay — MAJOR DISCOVERY (NEW)
+### Muon weight decay — MAJOR DISCOVERY (UPDATED)
 - WD 0.04 (default): BPB 1.1207, 15.55MB — established baseline
+- WD 0.03: BPB **1.1187** (-0.0020!), **16.52MB (OVER by 517KB)**
 - WD 0.02 (halved): BPB **1.1186** (-0.0021!), **17.58MB (OVER)**
-- The model is NOT overfitting at WD=0.04 (train ≈ val loss), so it's over-regularized
-- Need to find the WD sweet spot that maximizes BPB while staying under 16MB
-- **Priority: Try WD=0.03 next, then 0.025 or 0.035 to narrow down**
+- BPB plateaus between 0.02-0.03, then jumps +0.002 at 0.04. Transition is between 0.03-0.04.
+- Linear interpolation: WD=0.035 → ~16.0MB, ~1.1197 BPB (-0.0010 improvement)
+- **Priority: Try WD=0.035 next. If over, try 0.037. If under with room, try 0.033.**
 
 ## Key Findings
 
@@ -186,3 +188,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-29 | ttt_3ep_2freeze | 1.1209 | 15.55MB | **REGRESSED**: TTT 3ep+2freeze (SOTA config). TTT delta=+0.0003 (WORSE than no TTT!). 9 unfrozen blocks overfit with 3 epochs. All TTT configs exhausted. |
 | 2026-03-29 | warmdown3000_sota_match | 1.1205 | 15.72MB | **REGRESSED**: warmdown 3000 (SOTA config) vs 3500. Base 1.1211 (+0.0004), TTT delta -0.0006 (halved). EMA 0.998 needs longer warmdown. 3500 is optimal. |
 | 2026-03-30 | muon_wd_002 | **1.1186** | 17.58MB (OVER) | **BEST BPB EVER but OVER 16MB**: Muon WD 0.02 (half of 0.04) gives -0.0021 BPB. Larger weights don't compress. Need WD ~0.03 sweet spot. |
+| 2026-03-30 | muon_wd_003 | **1.1187** | 16.52MB (OVER) | **OVER by 517KB**: BPB same as WD=0.02 (plateau). Need WD=0.035 to fit under 16MB. |
