@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89037259,
+  "val_bpb": 1.11958809,
+  "artifact_size_bytes": 16009329,
+  "train_time_ms": 600009,
+  "steps": 6989,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "muon_wd_0035",
+  "experiment": "20260330_124353_muon_wd_0035",
+  "pod_id": "asipf3qcnbgl5r",
+  "elapsed_min": 24.5,
+  "estimated_cost": 8.78
+}

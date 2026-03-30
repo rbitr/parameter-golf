@@ -31,7 +31,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [-] **Gradient accumulation tweaks** — Abandoned: batch size experiment shows 786K is well-optimized.
 - [x] **Muon weight decay tuning** — TRIED: WD=0.02 (half of 0.04). RESULT: **-0.0021 BPB (1.1186 vs 1.1207) but artifact 17.58MB (OVER 16MB)**. Lower WD = larger weights = worse compression. Need WD ~0.03-0.035 sweet spot. **HIGH PRIORITY: biggest BPB improvement found.**
 - [x] **Muon WD=0.03 (compromise)** — TRIED: BPB 1.1187 (same as 0.02!), 16.52MB (OVER by 517KB). BPB plateaus 0.02-0.03.
-- [ ] **Muon WD=0.035** — Interpolated: ~16.0MB, ~1.1197 BPB. HIGH PRIORITY.
+- [x] **Muon WD=0.035** — TRIED: BPB 1.1204 base (only -0.0003), 16.01MB (OVER by 9KB). BPB cliff is between 0.03-0.035. Dead end.
 - [-] **Muon WD=0.025** — Abandoned: 0.03 already same BPB as 0.02, going lower won't help. Need higher WD for size.
 - [ ] **Different optimizers** — SOAP, Lion, Adalayer. Muon works well but alternatives exist.
 - [ ] **Data ordering** — Smart curriculum over FineWeb shards. Some data is harder/more useful than others.
@@ -91,8 +91,8 @@ Evolving list of ideas to explore. Mark with status as you go:
 - WD 0.03: BPB **1.1187** (-0.0020!), **16.52MB (OVER by 517KB)**
 - WD 0.02 (halved): BPB **1.1186** (-0.0021!), **17.58MB (OVER)**
 - BPB plateaus between 0.02-0.03, then jumps +0.002 at 0.04. Transition is between 0.03-0.04.
-- Linear interpolation: WD=0.035 → ~16.0MB, ~1.1197 BPB (-0.0010 improvement)
-- **Priority: Try WD=0.035 next. If over, try 0.037. If under with room, try 0.033.**
+- WD=0.035: BPB 1.1204 base (-0.0003), 16.01MB (OVER by 9KB). BPB cliff is 0.03-0.035.
+- **Dead end**: Can't fit beneficial WD range (≤0.03) under 16MB. Need ~500KB compression savings.
 
 ## Key Findings
 
@@ -189,3 +189,4 @@ Evolving list of ideas to explore. Mark with status as you go:
 | 2026-03-29 | warmdown3000_sota_match | 1.1205 | 15.72MB | **REGRESSED**: warmdown 3000 (SOTA config) vs 3500. Base 1.1211 (+0.0004), TTT delta -0.0006 (halved). EMA 0.998 needs longer warmdown. 3500 is optimal. |
 | 2026-03-30 | muon_wd_002 | **1.1186** | 17.58MB (OVER) | **BEST BPB EVER but OVER 16MB**: Muon WD 0.02 (half of 0.04) gives -0.0021 BPB. Larger weights don't compress. Need WD ~0.03 sweet spot. |
 | 2026-03-30 | muon_wd_003 | **1.1187** | 16.52MB (OVER) | **OVER by 517KB**: BPB same as WD=0.02 (plateau). Need WD=0.035 to fit under 16MB. |
+| 2026-03-30 | muon_wd_0035 | 1.1196 | 16.01MB (OVER) | **OVER by 9KB**: Base 1.1204 (same as 0.04!). BPB cliff between 0.03-0.035. WD tuning dead end. |
