@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89334913,
+  "val_bpb": 1.12135097,
+  "artifact_size_bytes": 15240382,
+  "train_time_ms": 600073,
+  "steps": 6391,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "12L_gqa4_mlp25x",
+  "experiment": "20260331_152240_12L_gqa4_mlp25x",
+  "pod_id": "0rrzotgzv69rb1",
+  "elapsed_min": 30.3,
+  "estimated_cost": 10.87
+}

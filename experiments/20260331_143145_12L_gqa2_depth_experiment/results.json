@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.88493365,
+  "val_bpb": 1.11636684,
+  "artifact_size_bytes": 17723594,
+  "train_time_ms": 600049,
+  "steps": 6446,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "12L_gqa2_depth_experiment",
+  "experiment": "20260331_143145_12L_gqa2_depth_experiment",
+  "pod_id": "0pzv74fxvfd1gg",
+  "elapsed_min": 28.9,
+  "estimated_cost": 10.38
+}
