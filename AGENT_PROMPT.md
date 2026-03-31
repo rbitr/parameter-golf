@@ -132,6 +132,32 @@ You cannot talk to a human directly. Your channels are:
 - **`CURRENT_BEST.md`** — progress tracking
 - **`human_notes/`** — human notes and your replies (prefix with `Agent:`)
 
+## Using `scripts/runpod_eval.py`
+
+The RunPod script handles the entire lifecycle: create pod, wait for ready, setup environment, upload script, run training, download results, terminate pod. **Do not try to do any of this manually.** Do not SSH into pods yourself, do not call the RunPod API directly, do not re-implement any of this logic.
+
+**How to run it:**
+```
+python scripts/runpod_eval.py -d "short_description" --seed 1337
+```
+
+**The script handles these failure modes automatically:**
+- **"No instances available"** — retries up to 5 times with 60s delay. If it still fails, wait and try again later (or create a blocker). Do NOT re-run immediately.
+- **Setup command timeouts** (data download, pip install) — retries each command once. If it fails twice, the run fails.
+- **Pod not ready** — waits up to 15 min for SSH to become available.
+
+**When a run fails, check `results.json` in the experiment directory.** It tells you exactly what went wrong. Common outcomes:
+- `"error": "...no instances available..."` — capacity issue, try again later
+- `"error": "...timed out..."` — transient network issue, safe to retry once
+- `"exit_code": 1` with `val_bpb: null` — training script crashed, check `train.log`
+- `"exit_code": 0` with valid `val_bpb` — success
+
+**Do NOT:**
+- Manually SSH into RunPod pods
+- Call `runpod.create_pod()` or other API functions directly
+- Modify `runpod_eval.py` to fix a one-off issue (fix your training script instead)
+- Retry more than once if the script itself fails — commit what you have and exit
+
 ## Technical Constraints
 
 - Working script must be valid `train_gpt.py` for `torchrun`

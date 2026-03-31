@@ -45,6 +45,11 @@ POD_READY_TIMEOUT = 900  # 15 min to become ready (8xH100 can be slow)
 TRAINING_TIMEOUT = 1800  # 30 min max for training (10 min) + eval (~5 min) + TTT (~7 min) + buffer
 SETUP_TIMEOUT = 300      # 5 min for setup commands
 
+# Retry config
+POD_CREATE_RETRIES = 5       # retries for "no instances available"
+POD_CREATE_RETRY_DELAY = 60  # seconds between retries
+SETUP_CMD_RETRIES = 2        # retries for setup commands (data download, etc.)
+
 
 def get_budget_spent() -> float:
     """Parse BUDGET.md to get cumulative spend."""
@@ -231,8 +236,7 @@ def run_evaluation(description: str = "eval", seed: int = 1337, dry_run: bool = 
     start_time = time.time()
 
     try:
-        # Create pod
-        print(f"Creating {GPU_COUNT}x H100 pod...")
+        # Read SSH public key
         ssh_pub_key = None
         for key_path in ["~/.ssh/id_ed25519.pub", "~/.ssh/id_rsa.pub"]:
             path = os.path.expanduser(key_path)
@@ -244,18 +248,29 @@ def run_evaluation(description: str = "eval", seed: int = 1337, dry_run: bool = 
             print("ERROR: No SSH public key found at ~/.ssh/id_ed25519.pub or ~/.ssh/id_rsa.pub")
             sys.exit(1)
 
-        pod = runpod.create_pod(
-            name=f"{POD_NAME_PREFIX}-{timestamp}",
-            gpu_type_id=GPU_TYPE_ID,
-            gpu_count=GPU_COUNT,
-            cloud_type=CLOUD_TYPE,
-            container_disk_in_gb=CONTAINER_DISK_GB,
-            template_id=TEMPLATE_ID,
-            support_public_ip=True,
-            env={"PUBLIC_KEY": ssh_pub_key},
-        )
-        pod_id = pod["id"]
-        print(f"Pod created: {pod_id}")
+        # Create pod (retry on "no instances available")
+        print(f"Creating {GPU_COUNT}x H100 pod...")
+        for attempt in range(1, POD_CREATE_RETRIES + 1):
+            try:
+                pod = runpod.create_pod(
+                    name=f"{POD_NAME_PREFIX}-{timestamp}",
+                    gpu_type_id=GPU_TYPE_ID,
+                    gpu_count=GPU_COUNT,
+                    cloud_type=CLOUD_TYPE,
+                    container_disk_in_gb=CONTAINER_DISK_GB,
+                    template_id=TEMPLATE_ID,
+                    support_public_ip=True,
+                    env={"PUBLIC_KEY": ssh_pub_key},
+                )
+                pod_id = pod["id"]
+                print(f"Pod created: {pod_id}")
+                break
+            except Exception as e:
+                if "no longer any instances available" in str(e).lower() and attempt < POD_CREATE_RETRIES:
+                    print(f"  No instances available (attempt {attempt}/{POD_CREATE_RETRIES}), retrying in {POD_CREATE_RETRY_DELAY}s...")
+                    time.sleep(POD_CREATE_RETRY_DELAY)
+                else:
+                    raise
 
         # Wait for ready
         info = wait_for_pod_ready(pod_id)
@@ -275,15 +290,28 @@ def run_evaluation(description: str = "eval", seed: int = 1337, dry_run: bool = 
              "(pip install --break-system-packages flash-attn --no-build-isolation -q 2>/dev/null || pip install flash-attn --no-build-isolation -q 2>/dev/null || echo 'flash-attn install failed, will use SDPA fallback')", 600),
         ]
         for cmd, cmd_timeout in setup_cmds:
-            rc, stdout, stderr = run_ssh_command(ssh_ip, ssh_port, cmd, timeout=cmd_timeout)
-            # Print setup command output for debugging
-            if stdout.strip():
-                for line in stdout.strip().split('\n')[-5:]:
-                    print(f"    {line}")
-            if rc != 0:
-                print(f"  Setup command failed (rc={rc}): {stderr[:500]}")
+            last_err = None
+            for attempt in range(1, SETUP_CMD_RETRIES + 1):
+                try:
+                    rc, stdout, stderr = run_ssh_command(ssh_ip, ssh_port, cmd, timeout=cmd_timeout)
+                except subprocess.TimeoutExpired:
+                    print(f"  Setup command timed out after {cmd_timeout}s (attempt {attempt}/{SETUP_CMD_RETRIES})")
+                    if attempt < SETUP_CMD_RETRIES:
+                        time.sleep(10)
+                        continue
+                    raise
+                # Print setup command output for debugging
+                if stdout.strip():
+                    for line in stdout.strip().split('\n')[-5:]:
+                        print(f"    {line}")
+                if rc == 0:
+                    break
+                last_err = stderr
+                print(f"  Setup command failed (rc={rc}, attempt {attempt}/{SETUP_CMD_RETRIES}): {stderr[:500]}")
                 if "No such file" in stderr or "not a git repository" in stderr:
                     raise RuntimeError(f"Critical setup failure: {stderr[:200]}")
+                if attempt < SETUP_CMD_RETRIES:
+                    time.sleep(10)
 
         # Upload our modified training script
         print("Uploading training script...")
