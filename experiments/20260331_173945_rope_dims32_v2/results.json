@@ -1,0 +1,14 @@
+{
+  "val_loss": null,
+  "val_bpb": null,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600059,
+  "steps": 6662,
+  "exit_code": 1,
+  "seed": 1337,
+  "description": "rope_dims32_v2",
+  "experiment": "20260331_173945_rope_dims32_v2",
+  "pod_id": "ws8g5zas9tot5r",
+  "elapsed_min": 21.2,
+  "estimated_cost": 7.6
+}

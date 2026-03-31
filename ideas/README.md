@@ -84,6 +84,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [x] **BigramHash @512d (SOTA config)** — TRIED: 1536 buckets@512d, no projection (vs 2048@128d+proj). RESULT: **+0.001 BPB worse** (1.1217 base, 1.1213 TTT). TTT delta also worse (-0.0004 vs -0.0012). More params (786K vs 327K) undertrained. SOTA's bigram works only with their speed optimizations. Don't try larger bigrams without more steps.
 - [x] **BigramHash 256d (doubled dim)** — TRIED: 2048 buckets@256d+proj (vs 128d+proj). RESULT: **+0.0002 base, +0.0003 TTT worse** (1.1209 base, 1.1201 TTT). TTT delta -0.0008 (vs -0.0012). Extra 328K params undertrained. **BigramHash is fully optimized at 2048×128d for ~7000 steps. Any expansion (buckets or dim) hurts. Dead end.**
 - [x] **Value Embedding layer count** — TRIED: VE on 8,9,10 (3 layers) vs 9,10 (2 layers). RESULT: +0.0015 BPB worse. Layer 8 too early for token identity. 9,10 is optimal.
+- [~] **rope_dims=32 (double RoPE)** — TRIED but CRASHED due to pruning bug. Artifact 16.41MB (900KB over baseline). Bug fixed (np.percentile). Needs retry, but 900KB compression penalty concerning.
 - [ ] **Vocabulary size optimization** — Larger vocab = fewer tokens = potentially better BPB, but more embedding params. Find the sweet spot.
 - [ ] **Knowledge distillation into quantized model** — Train large, distill into the 16MB target.
 
@@ -240,3 +241,10 @@ Pick from this list. Each must be a genuinely novel experiment, not an increment
 | 2026-03-30 | muon_wd_0035 | 1.1196 | 16.01MB (OVER) | **OVER by 9KB**: Base 1.1204 (same as 0.04!). BPB cliff between 0.03-0.035. WD tuning dead end. |
 | 2026-03-30 | ttt_freeze2_lr001_2ep | 1.1230 | 15.55MB | **REGRESSED**: TTT freeze=2, lr=0.001, 2ep. TTT delta=+0.0019 (catastrophic). Base 1.1211. Forgetting starts at chunk 50. All TTT configs exhausted. |
 | 2026-03-30 | matrix_lr_002 | 1.1230 | 15.27MB | **REGRESSED**: matrix_lr 0.02 (down from 0.025) +0.0023 BPB. Underfits at ~7000 steps. 0.025 is optimal for our step budget. |
+| 2026-03-30 | softcap_15 | 1.1244 | — | **REGRESSED**: softcap=15 (vs 30) +0.0040 BPB. Lower softcap helps early training but limits expressiveness at convergence. 30 is optimal. |
+| 2026-03-31 | hessian_gptq_xsa11 | **1.1168** | 15.54MB | **NEW BEST!** Full Hessian GPTQ + AR self-gen + XSA all 11 layers + WD=0.03. -0.0036 BPB. TTT dead (delta=0.0000). |
+| 2026-03-31 | 10L_wd03 | 1.1241 | 15.01MB | **REGRESSED**: 10L/512d/WD=0.03 +0.0073 worse. Fewer layers devastating. 11L is minimum. |
+| 2026-03-31 | 12L_gqa2_depth_experiment | 1.1164 | 17.72MB (OVER) | 12L/GQA-2/MLP-3x. Best BPB ever (1.1164!) but 1.7MB over 16MB. Can't fit 12L with GQA-2. |
+| 2026-03-31 | 12L_gqa4_mlp25x | 1.1214 | 15.24MB | **REGRESSED**: 12L/GQA-4/MLP-2.5x fits but narrow MLP devastating (+0.0046 BPB). |
+| 2026-03-31 | rope_dims32 | CRASH | 16.41MB (OVER) | **CRASHED**: rope_dims=32 makes artifact 900KB larger (worse compression). torch.quantile bug in pruning code. |
+| 2026-03-31 | rope_dims32_v2 | CRASH | 16.40MB (OVER) | **CRASHED**: Same bug (.cpu() not sufficient). Fixed with np.percentile(). Need retry. |

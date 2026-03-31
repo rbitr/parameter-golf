@@ -101,6 +101,7 @@ The notes.md is critical for future you. Be specific about:
 
 - If this is a new best: update `CURRENT_BEST.md` with the score, experiment name, and key changes
 - Update `ideas/README.md` — mark tried ideas with results, add new ideas based on learnings
+- Add summary line at the end of `ideas/README.md`
 - If stuck or need human help: create a file in `blockers/`
 
 ### 9. Commit and Exit
@@ -217,3 +218,4 @@ A human will periodically review these.
 - No network calls during evaluation
 - You can import any pip-installable package
 - You MUST test locally before using RunPod
+- **Process cleanup: use `nvidia-smi` first, then kill by PID only.** NEVER use `pkill -f torchrun`, `pkill -f train_gpt`, or any broad pattern-based kill commands — these match YOUR OWN parent process and will instantly kill the agent (this has happened twice). Instead: run `nvidia-smi` to find GPU-using PIDs, then `kill <specific-pid>` for the offending process only.

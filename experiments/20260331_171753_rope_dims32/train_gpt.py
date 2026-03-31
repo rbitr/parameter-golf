@@ -86,7 +86,7 @@ class Hyperparameters:
     bigram_vocab_size = int(os.environ.get("BIGRAM_VOCAB_SIZE", 2048))
     bigram_dim = int(os.environ.get("BIGRAM_DIM", 128))
     xsa_last_n = int(os.environ.get("XSA_LAST_N", 11))
-    rope_dims = int(os.environ.get("ROPE_DIMS", 16))
+    rope_dims = int(os.environ.get("ROPE_DIMS", 32))
     ln_scale = bool(int(os.environ.get("LN_SCALE", "1")))
     dtg_enabled = bool(int(os.environ.get("DTG_ENABLED", "0")))
     late_qat_threshold = float(os.environ.get("LATE_QAT_THRESHOLD", 0.15))
@@ -1744,7 +1744,7 @@ def main() -> None:
             mid = (lo + hi) / 2.0
             if mid < 0.01:
                 break
-            threshold = float(np.percentile(nonzero_imp.cpu().numpy(), mid))
+            threshold = torch.quantile(nonzero_imp, mid / 100.0).item()
             # Apply pruning to a copy
             qr_pruned = {}
             for k, v in quant_result.items():
@@ -1771,7 +1771,7 @@ def main() -> None:
                 lo = mid  # need more pruning
         if best_pct > 0:
             # Re-apply the best pruning to quant_result
-            threshold = float(np.percentile(nonzero_imp.cpu().numpy(), best_pct))
+            threshold = torch.quantile(nonzero_imp, best_pct / 100.0).item()
             for name, info in quant_meta.items():
                 if isinstance(info, dict) and info.get("type") == "int6":
                     qk = name + ".q"
