@@ -21,6 +21,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **State-space model hybrid (Mamba/S4)** — Replace some or all attention layers with SSM blocks. Could be fundamentally more parameter-efficient.
 - [ ] **RWKV-style linear attention** — Replace softmax attention with linear recurrence. Cheaper per layer → more layers.
 - [ ] **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
+- [x] **Untied embeddings (separate lm_head)** — TRIED: +0.0208 BPB (catastrophic). 524K extra params severely undertrained. Tied embedding provides beneficial inductive bias + richer gradient. **Dead end.**
 - [ ] **Factored embeddings** — Low-rank embedding matrix to save parameters, especially if increasing vocab size.
 - [ ] **Mixture of depths** — Skip some layers for some tokens via a learned router.
 - [ ] **Knowledge distillation** — Train a larger teacher model (unconstrained), distill into the 16MB student.
@@ -248,3 +249,4 @@ Pick from this list. Each must be a genuinely novel experiment, not an increment
 | 2026-03-31 | 12L_gqa4_mlp25x | 1.1214 | 15.24MB | **REGRESSED**: 12L/GQA-4/MLP-2.5x fits but narrow MLP devastating (+0.0046 BPB). |
 | 2026-03-31 | rope_dims32 | CRASH | 16.41MB (OVER) | **CRASHED**: rope_dims=32 makes artifact 900KB larger (worse compression). torch.quantile bug in pruning code. |
 | 2026-03-31 | rope_dims32_v2 | CRASH | 16.40MB (OVER) | **CRASHED**: Same bug (.cpu() not sufficient). Fixed with np.percentile(). Need retry. |
+| 2026-03-31 | untied_embeddings_headlr04 | 1.1376 | 15.91MB | **REGRESSED**: Untied embeddings +0.0208 BPB (catastrophic). 524K extra params undertrained. Tied embedding beneficial inductive bias. Dead end. |

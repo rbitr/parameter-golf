@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.92085971,
+  "val_bpb": 1.13764433,
+  "artifact_size_bytes": 15905565,
+  "train_time_ms": 600091,
+  "steps": 6675,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "untied_embeddings_headlr04",
+  "experiment": "20260331_200255_untied_embeddings_headlr04",
+  "pod_id": "g9eqsq80dfkv1k",
+  "elapsed_min": 33.2,
+  "estimated_cost": 11.9
+}
