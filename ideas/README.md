@@ -6,21 +6,42 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [x] = tried (note result)
 - [-] = abandoned (note reason)
 
-## Architecture
+## Architecture & Quantization — PRIORITY IDEAS (UPDATED 2026-03-31)
 
-- [x] **Depth recurrence / weight sharing** — TRIED: shared attn+MLP weights between layers 7-10 and 3-6. RESULT: **+0.035 BPB worse** (1.159 vs 1.124). Model too small for weight sharing; every unique param matters. Gives 3.6% more steps but 35% fewer unique params is devastating.
-- [ ] **Mixture of Experts (MoE)** — Sparse MLP with 2-4 experts, top-1 routing. More capacity per parameter. Need to ensure it quantizes well.
-- [ ] **Linear attention variants** — Replace softmax attention in some layers with linear attention for efficiency. Could allow more layers or longer context.
-- [ ] **Cross-layer attention / dense connections** — Reuse KV from earlier layers. More information flow without more parameters.
-- [ ] **Wider vs deeper tradeoffs** — Systematic sweep: more layers with smaller dim vs fewer layers with larger dim. The SOTA uses 11L/512d but is that optimal?
-- [x] **Alternative activation functions** — TRIED: LeakyReLU(0.5)²: **-0.0019 BPB** (1.1207). LeakyReLU(0.7)²: **+0.0035 BPB** (1.1242, worse than ReLU!). Optimum near 0.5. Slope² determines negative weight: 0.5→0.25 is the sweet spot. Could try 0.3 but unlikely to beat 0.5.
+### Infrastructure upgrade (ONE run, bundle together)
+These are architecture-agnostic improvements. Implement once, benefit every future experiment.
+- [ ] **Full Hessian GPTQ + AR self-gen calibration** — Replace GPTQ-lite (diagonal Hessian) with full Hessian GPTQ (Cholesky + column reordering). Model generates its own calibration data (64×2048 seqs, T=0.8). Legal under rules. Architecture-agnostic — improves quantization for ANY model. **HARD LIMIT: max 2 RunPod runs. If it doesn't work, park it and move on.**
+- [ ] **XSA on ALL 11 layers** — Change `xsa_last_n` from 4 to 11. One-line change, bundle with GPTQ run.
+- [ ] **LZMA preset=9 vs brotli-10** — Compare compression on resulting model. Quick test, bundle with GPTQ run.
+
+### Bold bets (ALL remaining runs after infrastructure upgrade)
+- [ ] **Mixture of Experts (MoE)** — Sparse MLP with 2-4 experts, top-1 routing. Doubles effective MLP capacity with minimal compute overhead. **HIGH PRIORITY — biggest untried architectural change.**
+- [ ] **Larger vocabulary (2048-8192 tokens)** — Fewer tokens per sequence = better BPB. Need factored embeddings. Ternary entry used 8192 BPE + 254d factored embeddings successfully. **BPB is the metric — this could be a fundamental unlock.**
+- [ ] **Wider vs deeper tradeoffs** — Is 11L/512d optimal? Try 8L/640d or 14L/448d.
+- [ ] **State-space model hybrid (Mamba/S4)** — Replace some or all attention layers with SSM blocks. Could be fundamentally more parameter-efficient.
+- [ ] **RWKV-style linear attention** — Replace softmax attention with linear recurrence. Cheaper per layer → more layers.
+- [ ] **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
 - [ ] **Factored embeddings** — Low-rank embedding matrix to save parameters, especially if increasing vocab size.
 - [ ] **Mixture of depths** — Skip some layers for some tokens via a learned router.
+- [ ] **Knowledge distillation** — Train a larger teacher model (unconstrained), distill into the 16MB student.
+- [ ] **Structured sparsity (2:4)** — Hardware-friendly sparsity. Could free space for lower weight decay (WD=0.03 gave best BPB but was 517KB over).
+
+### DO NOT chase these SOTA-specific choices (architecture trap)
+- BigramHash 3072×112 — we tried 3072, it was a wash for us. Don't re-try.
+- Warmdown 4000 — we tried 3800, it regressed. Don't re-try.
+- Selective ±1 pruning — marginal, revisit only if budget allows at the end.
+- Parameter Banking — we tried it, catastrophic. Don't re-try.
+
+### Abandoned
+- [-] **BitNet / ternary weights** — EVALUATED from leaderboard (Ciprian-Florin Ifrim). Ternary scored **1.1570** in 10 min (far worse than int6 1.1147). Binary reached 1.1239 but needed 2+ hours (~13x more training). EMA and Muon WD incompatible with BitNet. **Not viable in 10-min budget.**
+
+## Architecture — Tried
+
+- [x] **Depth recurrence / weight sharing** — TRIED: shared attn+MLP weights between layers 7-10 and 3-6. RESULT: **+0.035 BPB worse** (1.159 vs 1.124). Model too small for weight sharing; every unique param matters. Gives 3.6% more steps but 35% fewer unique params is devastating.
+- [x] **Alternative activation functions** — TRIED: LeakyReLU(0.5)²: **-0.0019 BPB** (1.1207). LeakyReLU(0.7)²: **+0.0035 BPB** (1.1242, worse than ReLU!). Optimum near 0.5. Slope² determines negative weight: 0.5→0.25 is the sweet spot. Could try 0.3 but unlikely to beat 0.5.
 - [x] **SwiGLU MLP activation** — TRIED: SwiGLU (gate+up+down at matched params, hidden=1024 vs 1536). RESULT: **+0.007 BPB worse** locally at 100 steps. The 2/3 width reduction hurts more than gating helps at this model size. LeakyReLU(0.5)² is optimal.
 
 ## Training
-
-- [ ] **Curriculum learning** — Start with shorter sequences, ramp up to 2048. May help early training efficiency.
 - [x] **Warmdown iters tuning** — TRIED: 3500→3800: **+0.0002 BPB worse**, artifact OVER 16MB. 3500→3000 (SOTA config): **+0.0004 BPB worse** (1.1211 base), TTT delta halved (-0.0006 vs -0.0012). EMA 0.998 needs longer warmdown. **3500 is optimal. Fully characterized: 3000 < 3500 > 3800.**
 - [x] **EMA decay tuning** — TRIED: 0.997→0.998: **-0.0006 BPB better** (1.1226). 0.999: **+0.0067 BPB worse** (1.1293). Optimum is 0.998. Not monotonic — 0.999 averages too much outdated history.
 - [x] **EMA+SWA blend** — TRIED: blend averaging at various alphas. RESULT: Pure EMA is best at scale (alpha=1.0). SWA adds no value AND costs ~1ms/step. Disabling SWA + EMA 0.998 = optimal.
@@ -34,6 +55,9 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [x] **Muon WD=0.035** — TRIED: BPB 1.1204 base (only -0.0003), 16.01MB (OVER by 9KB). BPB cliff is between 0.03-0.035. Dead end.
 - [-] **Muon WD=0.025** — Abandoned: 0.03 already same BPB as 0.02, going lower won't help. Need higher WD for size.
 - [ ] **Different optimizers** — SOAP, Lion, Adalayer. Muon works well but alternatives exist.
+- [ ] **Muon NS per-component orthogonalization** — From Gram Newton-Schulz paper (dao-lab.ai): orthogonalize Q, K, V separately rather than as a concatenated matrix. Improved loss by ~0.2 ppl on Llama-430M. Check if our code concatenates any weights before NS — if so, splitting could help quality for free.
+- [ ] **Muon NS optimized polynomial coefficients ("Polar Express")** — From GNS paper: use per-iteration-tuned (a,b,c) coefficients instead of the same fixed triple each iteration. Could converge in fewer NS steps (currently 5), saving compute → more training steps.
+- [ ] **Curriculum learning** — Start with shorter sequences, ramp up to 2048. May help early training efficiency.
 - [ ] **Data ordering** — Smart curriculum over FineWeb shards. Some data is harder/more useful than others.
 - [x] **Label smoothing** — TRIED: epsilon=0.02. RESULT: **+0.0212 BPB worse** (1.1444 vs 1.1232). Devastating at this model size — model too small to waste capacity softening targets.
 - [x] **Multi-token prediction (MTP)** — TRIED: 1 head, weight=0.2. RESULT: **+0.0113 BPB worse** (1.1339 vs 1.1226). Auxiliary losses don't help at this scale — gradient interference + 1.5% compute overhead.
@@ -41,7 +65,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Quantization & Compression
 
-- [ ] **BitNet / ternary weights** — Train with ternary or binary weights from scratch. Zero quantization gap.
+- [ ] **Full Hessian GPTQ + AR self-gen calibration** — See Infrastructure Upgrade section above. Architecture-agnostic, bundle with first run.
+- [ ] **LZMA preset=9 vs brotli-10** — See Infrastructure Upgrade section above. Quick comparison, bundle with first run.
+- [ ] **Selective ±1 pruning by reconstruction error** — SOTA uses this. More surgical than our previous all-±1 pruning. Low priority — revisit if budget allows.
+- [-] **TurboQuant (PolarQuant + QJL)** — Not applicable (compresses KV-cache activations, not model weights).
+- [-] **BitNet / ternary weights** — Not viable in 10-min budget (see Abandoned section above).
 - [x] **Mixed precision per-layer (int5 MLP)** — TRIED: int5 for MLPs, int6 for attention. RESULT: **+0.019 BPB worse**. Int5 quantization gap is devastating. Not viable at this model size.
 - [x] **Fix dead-coded QAT** — TRIED 5 times: QAT + 5 clips gives best BPB (1.1230) but artifact 80KB over 16MB. QAT + 10 clips fits under 16MB (15.93MB) but BPB is 1.1234 (worse than no-QAT best 1.1232). The GPTQ clip count interacts with QAT. Need to try 7-8 clips or find other ways to save ~100KB.
 - [x] **More GPTQ clips (15)** — TRIED: 15 clips gives NO improvement over 10 clips. Quantization gap identical (0.0237 vs 0.0238). Search saturated at 10 points. Don't increase further.
@@ -74,21 +102,37 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **Search the literature** — Recent papers on efficient LM training, parameter-efficient methods.
 - [ ] **Analyze the baseline** — Profile where parameters are spent. What's the bottleneck?
 
-## Priority Queue (next experiments)
+## Priority Queue (next experiments) — UPDATED 2026-03-31
 
-1. ~~**Speed optimization (Parameter Banking)**~~ — TRIED: Replaced all nn.Linear with 4 contiguous banks, removed DDP for manual gradient sync. RESULT: **CATASTROPHIC — 182ms/step (2.1x slower), 3307 steps, val_bpb 1.1633**. Removing DDP eliminated critical communication-computation overlap. Forward pass was faster (~80ms steps 1-10) but sequential gradient sync after backward added ~100ms. **Simpler alternative: batch NS calls in Muon by grouping same-shape params, keep DDP.**
-2. ~~**BigramHash @512d (1536 buckets)**~~ — TRIED: +0.001 BPB worse. Undertrained at ~7000 steps. TTT delta also regressed (-0.0004 vs -0.0012). Needs Parameter Banking for more steps first.
-3. ~~**TTT 2 epochs at lr=0.0005**~~ — TRIED: delta=-0.0007, same as 1ep+anchor. Extra epoch causes forgetting. TTT tuning exhausted.
-4. ~~**Earlier QAT (threshold 0.20-0.25)**~~ — TRIED: 0.20 gave 1.1234, +0.0008 worse. 0.15 is optimal.
-5. ~~**grad_clip_norm=1.0**~~ — TRIED: +0.0007 BPB worse (1.1214). Helped locally but hurt at 8-GPU scale. 0.3 is optimal for DDP training.
-6. **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
-12. **Compression study results** — Tested lzma, byte-shuffling, int6 bit-packing, delta encoding, bit-plane decomposition, sign-magnitude split on real WD=0.03/0.04 models. **ALL worse than brotli-10 on int8**. Brotli-10 is near-optimal for our data. WD=0.03 weights are fundamentally higher entropy. Compression is a dead end.
-13. ~~**matrix_lr tuning**~~ — TRIED: 0.020: **+0.0023 BPB worse**. 0.030: neutral locally (3.7306 vs 3.7300). **0.025 is optimal. Fully characterized: 0.020 < 0.025 ≈ 0.030. Dead end.**
-9. ~~**TTT 3ep + 2 frozen blocks at lr=0.0005**~~ — TRIED: delta=+0.0003 (WORSE). 9 unfrozen blocks overfit with 3 epochs. SOTA's model handles this because of stronger base. All TTT configs exhausted.
-11. ~~**TTT freeze=2, lr=0.001, 2ep**~~ — TRIED: delta=+0.0019 (WORSE). Forgetting starts by chunk 50, catastrophic by chunk 200. Cosine LR decay helps but can't prevent early damage. TTT fully exhausted.
-10. **Batched NS in Muon (keep DDP)** — Group same-shape params for batched Newton-Schulz via torch.bmm. Reduces kernel launches from ~44 to ~4 without touching DDP. Could save 2-3ms/step → ~150 more steps.
-7. ~~**Disable QAT entirely**~~ — TRIED: 0.0 gave 1.1233, +0.0007 worse. QAT 0.15 is the sweet spot — helps both model quality and quant gap.
-8. ~~**TTT with Adam optimizer**~~ — TRIED: Adam TTT lr=0.001 gave BPB 1.2620 (+0.1416 regression). Adam is catastrophically wrong for few-shot TTT — variance estimates are noisy with so few steps, causing massive uncontrolled updates. SGD with momentum is far superior for TTT.
+**New SOTA is 1.1147 (gap: 0.005). Strategy: one infrastructure upgrade, then all bold bets.**
+
+### Run 1-2: Infrastructure upgrade (ONE combined run)
+Bundle Full Hessian GPTQ + XSA-all-layers + LZMA comparison into a single run. These are architecture-agnostic and benefit all future experiments. **HARD LIMIT: 2 runs max. If GPTQ doesn't work after 2 attempts, park it.**
+
+### All remaining runs: Bold exploration only
+Pick from this list. Each must be a genuinely novel experiment, not an incremental tweak.
+1. **Mixture of Experts (MoE)** — 2-4 expert MLP with top-1 routing. Doubles effective capacity. Biggest untried architectural change.
+2. **Larger vocabulary (2048-8192)** — Fewer tokens per sequence → better BPB. Requires factored embeddings. Could be a fundamental unlock.
+3. **Wider model (8L/640d or 7L/768d)** — Radically different width/depth tradeoff.
+4. **SSM/Mamba hybrid or RWKV-style** — Fundamentally different from attention. Could be more parameter-efficient.
+5. **Knowledge distillation** — Train unconstrained teacher, distill into 16MB student.
+6. **Cross-layer KV sharing** — More info flow without more params.
+7. **Structured sparsity (2:4) + lower WD** — Could unlock WD=0.03 (best BPB ever, but 517KB over).
+
+### DO NOT spend runs on
+- BigramHash 3072×112, warmdown 4000, selective pruning, parameter banking — SOTA-specific choices that don't generalize to our stack
+- Any hyperparameter tweak <10% (WD, EMA, GPTQ clips, TTT LR, etc.)
+- Anything we've already tried a variant of (see Completed/Dead below)
+
+### Completed/Dead (kept for history)
+- ~~Parameter Banking~~ — CATASTROPHIC (removed DDP, 2.1x slower)
+- ~~BigramHash expansion~~ — All sizes tried, 2048×128d is optimal
+- ~~TTT tuning~~ — All configs exhausted, 1ep/lr=0.0005 is best
+- ~~QAT tuning~~ — 0.15 is optimal
+- ~~grad_clip tuning~~ — 0.3 is optimal
+- ~~matrix_lr tuning~~ — 0.025 is optimal
+- ~~Compression alternatives~~ — brotli-10 is optimal, all others worse
+- ~~Muon WD tuning~~ — Best BPB at WD≤0.03 but can't fit under 16MB
 
 ### Muon weight decay — MAJOR DISCOVERY (UPDATED)
 - WD 0.04 (default): BPB 1.1207, 15.55MB — established baseline

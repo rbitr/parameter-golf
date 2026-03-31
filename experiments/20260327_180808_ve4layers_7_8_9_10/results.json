@@ -1,0 +1,14 @@
+{
+  "val_loss": null,
+  "val_bpb": null,
+  "artifact_size_bytes": null,
+  "train_time_ms": null,
+  "steps": null,
+  "exit_code": 1,
+  "seed": 1337,
+  "description": "ve4layers_7_8_9_10",
+  "experiment": "20260327_180808_ve4layers_7_8_9_10",
+  "pod_id": "4pkm4u15t7mihc",
+  "elapsed_min": 5.3,
+  "estimated_cost": 1.9
+}

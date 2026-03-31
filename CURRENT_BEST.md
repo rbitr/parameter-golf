@@ -44,13 +44,27 @@
 - brotli quality=10 saves ~645KB vs zstd-22
 - Key unlock: EMA 0.998 always gave better BPB but couldn't fit under 16MB with zstd
 
-## Leaderboard SOTA (for reference)
-- **1.1194 BPB** — LeakyReLU² + Legal TTT + Parallel Muon (2026-03-23)
-- Our gap: +0.0004 BPB (down from +0.0006)
-- **CORRECTED SOTA ablation**: LeakyReLU=-0.0021, BigramHash=-0.0009, TTT=-0.0004
-- SOTA base (sliding window): ~1.1198, our base: ~1.1207. Gap is -0.0009 = BigramHash expansion
-- SOTA TTT delta: -0.0004, our TTT delta: -0.0012 (we're better!)
-- SOTA key differences: Parameter Banking (83.3ms/step, +200 steps), BigramHash 1536d (full dim, -0.0009), EMA 0.997+SWA, GPTQ+lzma
+## Leaderboard SOTA (for reference — UPDATED 2026-03-31)
+- **1.1147 BPB** — AR Self-Gen GPTQ + all-layer XSA by abaybektursun (2026-03-25)
+- Our gap: **+0.0051 BPB** (widened significantly from +0.0004)
+- **New SOTA key innovations:**
+  - **Full Hessian GPTQ** (Cholesky + column reorder) with **AR self-generated calibration data** (model generates its own 64×2048 calibration sequences, T=0.8 — legal, no val/train data accessed)
+  - **XSA on ALL 11 layers** (we use last 4 only)
+  - **BigramHash 3072×112** (we use 2048×128)
+  - Selective ±1 pruning by reconstruction error
+  - LZMA preset=9 compression
+  - **TTT dropped entirely** — found neutral/negative on their stack
+  - EMA 0.997 + SWA every 50 steps, warmdown 4000
+  - Parameter Banking + Parallel Muon (~87ms/step, ~6920 steps)
+- **Previous SOTA (1.1194)**: LeakyReLU² + Legal TTT + Parallel Muon (2026-03-23)
+
+### Ternary quantization results (from leaderboard, by Ciprian-Florin Ifrim)
+- **10-min track: 1.1570 BPB** — 10L/768d, 73.7M params, BitNet b1.58 {-1,0,+1}, 8192 BPE vocab, NeoMuon, 6530 steps
+- **Unlimited compute: 1.1239 BPB** — 15L/768d, 106.2M binary {-1,+1}, 50k steps (~2.15hr)
+- Key finding: ternary needs ~13x more training time to beat int6 approaches at this scale
+- Width>depth for ternary (768d/10L beats 512d/25L due to faster steps)
+- EMA and Muon WD are **incompatible** with BitNet
+- Ternary is NOT competitive in the 10-min budget. Binary (1-bit) could be with enough steps but can't converge fast enough.
 
 ## Dead Ends (confirmed no improvement)
 - Grouped int6 quantization (G=128): -0.0001 BPB (noise). Per-row already optimal.

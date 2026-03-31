@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89671094,
+  "val_bpb": 1.12334203,
+  "artifact_size_bytes": 15503722,
+  "train_time_ms": 600014,
+  "steps": 6872,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "softcap_15",
+  "experiment": "20260330_202946_softcap_15",
+  "pod_id": "9crkqbkk2os9ag",
+  "elapsed_min": 25.3,
+  "estimated_cost": 9.08
+}

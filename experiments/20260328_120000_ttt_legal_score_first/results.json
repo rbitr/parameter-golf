@@ -1,0 +1,5 @@
+{
+  "error": "Command '['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'ConnectTimeout=30', '-p', '10223', 'root@103.207.149.106', 'cd /workspace/parameter-golf && SEED=1337 RUN_ID=eval_20260328_120000 DATA_PATH=./data/datasets/fineweb10B_sp1024/ TOKENIZER_PATH=./data/tokenizers/fineweb_1024_bpe.model VOCAB_SIZE=1024 torchrun --standalone --nproc_per_node=8 train_gpt.py 2>&1']' timed out after 1200 seconds",
+  "elapsed_min": 24.0,
+  "estimated_cost": 8.6
+}

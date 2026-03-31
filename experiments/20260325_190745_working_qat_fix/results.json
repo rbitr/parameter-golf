@@ -1,0 +1,5 @@
+{
+  "error": "Command '['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'ConnectTimeout=30', '-p', '19212', 'root@213.181.105.225', 'cd /workspace/parameter-golf && python3 data/cached_challenge_fineweb.py --variant sp1024']' timed out after 300 seconds",
+  "elapsed_min": 5.4,
+  "estimated_cost": 1.95
+}
