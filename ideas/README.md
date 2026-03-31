@@ -15,9 +15,9 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [-] **TTT** — ABANDONED. Delta=0.0000 with Full Hessian GPTQ. Not worth eval time.
 
 ### Bold bets (ALL remaining runs after infrastructure upgrade)
-- [ ] **Mixture of Experts (MoE)** — Sparse MLP with 2-4 experts, top-1 routing. Doubles effective MLP capacity with minimal compute overhead. **HIGH PRIORITY — biggest untried architectural change.**
-- [ ] **Larger vocabulary (2048-8192 tokens)** — Fewer tokens per sequence = better BPB. Need factored embeddings. Ternary entry used 8192 BPE + 254d factored embeddings successfully. **BPB is the metric — this could be a fundamental unlock.**
-- [ ] **Wider vs deeper tradeoffs** — Is 11L/512d optimal? Try 8L/640d or 14L/448d.
+- [-] **Mixture of Experts (MoE)** — EVALUATED LOCALLY: Dense MoE (iso-param, 2 experts) adds ~7% overhead from loop over experts without reducing total compute. Sparse routing breaks torch.compile fullgraph. Net: more steps lost to overhead than gained from specialization. **Not viable without custom sparse kernels.**
+- [ ] **Larger vocabulary (2048-8192 tokens)** — Fewer tokens per sequence = better BPB. Need factored embeddings. Ternary entry used 8192 BPE + 254d factored embeddings successfully. **BPB is the metric — this could be a fundamental unlock.** BLOCKER: Only 1024-BPE tokenized data available; re-tokenization requires original text.
+- [x] **Wider vs deeper tradeoffs** — TRIED: 10L/512d+WD=0.03: **+0.0073 BPB worse** (1.1241 vs 1.1168). 14L/448d: 23% slower locally (would lose ~19% of steps). **11L/512d is the sweet spot. Depth is CRITICAL — losing 1 layer costs ~0.007 BPB, far more than extra steps can recover. Going deeper is too slow. Architecture is at a local optimum.**
 - [ ] **State-space model hybrid (Mamba/S4)** — Replace some or all attention layers with SSM blocks. Could be fundamentally more parameter-efficient.
 - [ ] **RWKV-style linear attention** — Replace softmax attention with linear recurrence. Cheaper per layer → more layers.
 - [ ] **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.

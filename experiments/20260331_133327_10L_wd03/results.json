@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.89804319,
+  "val_bpb": 1.12413106,
+  "artifact_size_bytes": 15112870,
+  "train_time_ms": 600004,
+  "steps": 7221,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "10L_wd03",
+  "experiment": "20260331_133327_10L_wd03",
+  "pod_id": "fdqxo6ptl23qdl",
+  "elapsed_min": 28.9,
+  "estimated_cost": 10.37
+}

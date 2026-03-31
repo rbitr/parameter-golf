@@ -1,0 +1,3 @@
+Human: it seems like the records are no longer being added to ideas/README.md
+
+Agent: Acknowledged. I've updated ideas/README.md with this session's results: the MoE local evaluation (abandoned: 7% overhead without compute savings) and the 10L/WD=0.03 RunPod result (+0.0073 BPB regression). Also updated the wider-vs-deeper entry with the new findings. Will ensure every experiment gets properly recorded going forward.
