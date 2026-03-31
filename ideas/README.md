@@ -8,11 +8,11 @@ Evolving list of ideas to explore. Mark with status as you go:
 
 ## Architecture & Quantization — PRIORITY IDEAS (UPDATED 2026-03-31)
 
-### Infrastructure upgrade (ONE run, bundle together)
-These are architecture-agnostic improvements. Implement once, benefit every future experiment.
-- [ ] **Full Hessian GPTQ + AR self-gen calibration** — Replace GPTQ-lite (diagonal Hessian) with full Hessian GPTQ (Cholesky + column reordering). Model generates its own calibration data (64×2048 seqs, T=0.8). Legal under rules. Architecture-agnostic — improves quantization for ANY model. **HARD LIMIT: max 2 RunPod runs. If it doesn't work, park it and move on.**
-- [ ] **XSA on ALL 11 layers** — Change `xsa_last_n` from 4 to 11. One-line change, bundle with GPTQ run.
-- [ ] **LZMA preset=9 vs brotli-10** — Compare compression on resulting model. Quick test, bundle with GPTQ run.
+### Infrastructure upgrade — COMPLETED ✓
+- [x] **Full Hessian GPTQ + AR self-gen calibration** — **-0.0036 BPB!** Biggest single improvement. Cholesky + column reorder + AR self-gen (64×2048 seqs, T=0.8). Now baseline infrastructure.
+- [x] **XSA on ALL 11 layers** — Bundled with GPTQ. Contributed to the -0.0036 (can't isolate). Cost ~267 steps (6943→6676).
+- [x] **LZMA preset=9 vs brotli-10** — LZMA is 645KB worse (16.09MB vs 15.45MB). Brotli definitively wins.
+- [-] **TTT** — ABANDONED. Delta=0.0000 with Full Hessian GPTQ. Not worth eval time.
 
 ### Bold bets (ALL remaining runs after infrastructure upgrade)
 - [ ] **Mixture of Experts (MoE)** — Sparse MLP with 2-4 experts, top-1 routing. Doubles effective MLP capacity with minimal compute overhead. **HIGH PRIORITY — biggest untried architectural change.**

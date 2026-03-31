@@ -4,37 +4,35 @@
 
 | Metric | Value |
 |--------|-------|
-| val_bpb | 1.1198 (with TTT) / 1.1204 (base, no TTT) |
-| val_loss | 1.8907 (TTT) / 1.8918 (base) |
-| artifact_size | 15,561,305 bytes (under 16MB, 439KB headroom) |
-| experiment | 20260328_180704_ttt_2ep_lr0005 |
-| base_experiment | 20260327_212743_leaky_relu_05_squared |
+| val_bpb | 1.1168 (base = TTT, TTT delta is 0) |
+| val_loss | 1.8856 |
+| artifact_size | 15,537,700 bytes (under 16MB, 462KB headroom) |
+| experiment | 20260331_115138_hessian_gptq_xsa11 |
 | seed | 1337 |
-| steps | 6943 |
-| ms/step | ~86 |
+| steps | 6676 |
+| ms/step | ~90 |
 
 ## Key Configuration
 - 11 layers, 512-dim, 8 heads (4 KV), 3x MLP, 1024 vocab
 - **LeakyReLU(0.5)² activation**
-- FA3 (FlashAttention 3), XSA on last 4 layers
+- FA3 (FlashAttention 3), **XSA on ALL 11 layers**
 - Partial RoPE (16/64 dims), LN Scale
 - EMA (decay=0.998), SWA DISABLED
-- GPTQ-lite (10 clip percentiles per row, optimal MSE search)
+- **Full Hessian GPTQ** (Cholesky + column reorder, 5 clip percentiles, block_size=128)
+- **AR self-generated calibration** (64 x 2048 seqs, temp=0.8, ~202s on 8xH100)
 - Late QAT (threshold=0.15)
 - SmearGate + BigramHash (2048 buckets, dim=128)
 - Value Embedding (dim=128, layers 9,10)
 - Int6 + **brotli-10** compression, legacy torch.save format
 - Warmdown 3500 iters, Muon optimizer
-- **TTT: SGD lr=0.0005, 2 epochs, 32K chunks, freeze_blocks=0, anchor_alpha=0.0**
+- TTT: DISABLED (delta=0.0000 — Full Hessian GPTQ eliminates TTT benefit)
 
-## TTT Status
-- TTT is saturated at -0.0007 to -0.0012 for our architecture
-- 2 epochs at lr=0.0005: delta=-0.0007 (same as 1ep+anchor, worse than 1ep no-anchor)
-- 1 epoch at lr=0.0005: delta=-0.0012 (best delta)
-- Anchor alpha=0.0003: delta=-0.0007 (no benefit)
-- **CORRECTED: SOTA TTT delta is only -0.0004** (from ablation table). The -0.0021 was LeakyReLU ablation, not TTT.
-- Our TTT (-0.0012) is actually BETTER than SOTA's (-0.0004)
-- **Focus on base model improvements, TTT is capped**
+## Key Innovation: Full Hessian GPTQ
+- Replaced GPTQ-lite (diagonal Hessian, per-row percentile search) with full GPTQ
+- Collects H = X^T X from model's own AR-generated calibration data
+- Cholesky decomposition of H^{-1}, column reordering by importance
+- Block-wise quantization with cross-block error propagation
+- **-0.0036 BPB improvement** — biggest single improvement in the project
 
 ## Previous Innovation: LeakyReLU(0.5)²
 - `torch.relu(x)` → `F.leaky_relu(x, 0.5)` in MLP
@@ -44,35 +42,29 @@
 - brotli quality=10 saves ~645KB vs zstd-22
 - Key unlock: EMA 0.998 always gave better BPB but couldn't fit under 16MB with zstd
 
-## Leaderboard SOTA (for reference — UPDATED 2026-03-31)
-- **1.1147 BPB** — AR Self-Gen GPTQ + all-layer XSA by abaybektursun (2026-03-25)
-- Our gap: **+0.0051 BPB** (widened significantly from +0.0004)
-- **New SOTA key innovations:**
-  - **Full Hessian GPTQ** (Cholesky + column reorder) with **AR self-generated calibration data** (model generates its own 64×2048 calibration sequences, T=0.8 — legal, no val/train data accessed)
-  - **XSA on ALL 11 layers** (we use last 4 only)
-  - **BigramHash 3072×112** (we use 2048×128)
-  - Selective ±1 pruning by reconstruction error
-  - LZMA preset=9 compression
-  - **TTT dropped entirely** — found neutral/negative on their stack
-  - EMA 0.997 + SWA every 50 steps, warmdown 4000
-  - Parameter Banking + Parallel Muon (~87ms/step, ~6920 steps)
-- **Previous SOTA (1.1194)**: LeakyReLU² + Legal TTT + Parallel Muon (2026-03-23)
+## TTT Status
+- TTT is **DEAD** for this configuration (delta=0.0000)
+- Full Hessian GPTQ reduced quantization gap so much that TTT has nothing to recover
+- Can be disabled to save ~5min eval time on 8xH100
 
-### Ternary quantization results (from leaderboard, by Ciprian-Florin Ifrim)
-- **10-min track: 1.1570 BPB** — 10L/768d, 73.7M params, BitNet b1.58 {-1,0,+1}, 8192 BPE vocab, NeoMuon, 6530 steps
-- **Unlimited compute: 1.1239 BPB** — 15L/768d, 106.2M binary {-1,+1}, 50k steps (~2.15hr)
-- Key finding: ternary needs ~13x more training time to beat int6 approaches at this scale
-- Width>depth for ternary (768d/10L beats 512d/25L due to faster steps)
-- EMA and Muon WD are **incompatible** with BitNet
-- Ternary is NOT competitive in the 10-min budget. Binary (1-bit) could be with enough steps but can't converge fast enough.
+## Leaderboard SOTA (for reference)
+- **1.1147 BPB** — AR Self-Gen GPTQ + all-layer XSA by abaybektursun (2026-03-25)
+- Our gap: **+0.0021 BPB** (down from +0.0051)
+
+## Compression Comparison (this run)
+- brotli-10: 15,450,738 bytes — FITS
+- LZMA preset=9: 16,092,640 bytes — OVER 16MB
+- Brotli is definitively better for our model
 
 ## Dead Ends (confirmed no improvement)
+- LZMA preset=9: 645KB worse than brotli-10. Don't switch.
+- TTT: delta=0.0000 with Full Hessian GPTQ. Not worth the eval time.
 - Grouped int6 quantization (G=128): -0.0001 BPB (noise). Per-row already optimal.
 - eval_seq_len=4096: CATASTROPHIC (1.5502 BPB). RoPE 4x extrapolation fails.
-- eval_seq_len > 2048: Don't try without training at that length.
 
 ## Infrastructure Notes
 - RunPod template has FA3 pre-installed (no pip install needed)
 - brotli needs `pip install --break-system-packages brotli`
 - Legacy torch.save format (`_use_new_zipfile_serialization=False`) compresses better with brotli
-- SSH timeout increased to 1800s to accommodate TTT eval time
+- SSH timeout increased to 1800s to accommodate eval time
+- AR generation takes ~202s on 8xH100 (single GPU, no KV cache)

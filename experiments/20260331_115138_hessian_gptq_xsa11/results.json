@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.88564881,
+  "val_bpb": 1.11679039,
+  "artifact_size_bytes": 15537700,
+  "train_time_ms": 600017,
+  "steps": 6676,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "hessian_gptq_xsa11",
+  "experiment": "20260331_115138_hessian_gptq_xsa11",
+  "pod_id": "r5ljnnc05v86y0",
+  "elapsed_min": 29.6,
+  "estimated_cost": 10.61
+}
