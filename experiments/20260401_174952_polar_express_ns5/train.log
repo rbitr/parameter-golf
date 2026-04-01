@@ -1,0 +1,182 @@
+W0401 17:55:59.418000 1282 torch/distributed/run.py:803] 
+W0401 17:55:59.418000 1282 torch/distributed/run.py:803] *****************************************
+W0401 17:55:59.418000 1282 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0401 17:55:59.418000 1282 torch/distributed/run.py:803] *****************************************
+logs/eval_20260401_174952.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:26993756
+mtp_num_heads:0 mtp_loss_weight:0.2 mtp_params:0
+XSA:last_11 active_layers:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+world_size:8 grad_accum_steps:1
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.035 head_lr:0.0 matrix_lr:0.025 scalar_lr:0.025
+train_batch_tokens:786432 train_seq_len:2048 iterations:20000 warmup_steps:20 max_wallclock_seconds:600.000
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+step:0/20000 val_loss:6.9279 val_bpb:4.1031 train_time:0ms step_avg:0.04ms
+step:1/20000 train_loss:6.9299 train_time:147ms step_avg:147.38ms
+step:2/20000 train_loss:8.5280 train_time:230ms step_avg:115.19ms
+step:3/20000 train_loss:7.6558 train_time:318ms step_avg:106.11ms
+step:4/20000 train_loss:7.3874 train_time:406ms step_avg:101.45ms
+step:5/20000 train_loss:7.2430 train_time:493ms step_avg:98.69ms
+step:6/20000 train_loss:6.9388 train_time:581ms step_avg:96.83ms
+step:7/20000 train_loss:6.7579 train_time:668ms step_avg:95.48ms
+step:8/20000 train_loss:6.6279 train_time:756ms step_avg:94.56ms
+step:9/20000 train_loss:6.3412 train_time:844ms step_avg:93.79ms
+step:10/20000 train_loss:5.9989 train_time:932ms step_avg:93.23ms
+step:500/20000 train_loss:2.3972 train_time:45511ms step_avg:91.02ms
+step:1000/20000 train_loss:2.2953 train_time:91569ms step_avg:91.57ms
+step:1500/20000 train_loss:2.2173 train_time:137684ms step_avg:91.79ms
+step:2000/20000 train_loss:2.0547 train_time:183687ms step_avg:91.84ms
+step:2500/20000 train_loss:6.1403 train_time:229715ms step_avg:91.89ms
+step:3000/20000 train_loss:5.4142 train_time:275434ms step_avg:91.81ms
+step:3500/20000 train_loss:6.0809 train_time:321091ms step_avg:91.74ms
+step:4000/20000 train_loss:6.9315 train_time:364618ms step_avg:91.15ms
+step:4000/20000 val_loss:6.9315 val_bpb:4.1052 train_time:364623ms step_avg:91.16ms
+step:4500/20000 train_loss:6.9315 train_time:408019ms step_avg:90.67ms
+step:5000/20000 train_loss:6.9315 train_time:451397ms step_avg:90.28ms
+step:5500/20000 train_loss:6.9315 train_time:494790ms step_avg:89.96ms
+step:6000/20000 train_loss:6.9315 train_time:538181ms step_avg:89.70ms
+late_qat:enabled step:6172 scale:0.1500
+step:6500/20000 train_loss:6.9315 train_time:581582ms step_avg:89.47ms
+step:6716/20000 val_loss:6.9315 val_bpb:4.1052 train_time:600069ms step_avg:89.35ms
+stopping_early: wallclock_cap train_time:600069ms step:6716/20000
+peak memory allocated: 22050 MiB reserved: 22100 MiB
+ema:applying EMA weights
+DIAGNOSTIC post_ema val_loss:6.9315 val_bpb:4.1052 eval_time:1971ms
+Serialized model: 106178569 bytes
+Code size: 93833 bytes
+gptq:generating autoregressive calibration data (64 seqs x 2048 tokens, temp=0.8)...
+gptq:generated 64 sequences in 200.7s
+gptq:collecting hessians from autoregressive data...
+gptq:collected hessians for 68 layers in 3.4s
+[rank7]: Traceback (most recent call last):
+[rank7]:   File "/workspace/parameter-golf/train_gpt.py", line 1943, in <module>
+[rank7]:     main()
+[rank7]:   File "/workspace/parameter-golf/train_gpt.py", line 1738, in main
+[rank7]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank7]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/workspace/parameter-golf/train_gpt.py", line 1316, in mixed_quantize_int6
+[rank7]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/workspace/parameter-golf/train_gpt.py", line 1195, in quantize_int6_gptq
+[rank7]:     Hinv = torch.linalg.cholesky(H)
+[rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]: torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed because the input is not positive-definite (the leading minor of order 2 is not positive-definite).
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/workspace/parameter-golf/train_gpt.py", line 1943, in <module>
+[rank0]:     main()
+[rank0]:   File "/workspace/parameter-golf/train_gpt.py", line 1738, in main
+[rank0]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank0]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/workspace/parameter-golf/train_gpt.py", line 1316, in mixed_quantize_int6
+[rank0]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/workspace/parameter-golf/train_gpt.py", line 1195, in quantize_int6_gptq
+[rank0]:     Hinv = torch.linalg.cholesky(H)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]: torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed because the input is not positive-definite (the leading minor of order 2 is not positive-definite).
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/workspace/parameter-golf/train_gpt.py", line 1943, in <module>
+[rank1]:     main()
+[rank1]:   File "/workspace/parameter-golf/train_gpt.py", line 1738, in main
+[rank1]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank1]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/workspace/parameter-golf/train_gpt.py", line 1316, in mixed_quantize_int6
+[rank1]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/workspace/parameter-golf/train_gpt.py", line 1195, in quantize_int6_gptq
+[rank1]:     Hinv = torch.linalg.cholesky(H)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]: torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed because the input is not positive-definite (the leading minor of order 2 is not positive-definite).
+[rank0]:[W401 18:11:57.954680451 ProcessGroupNCCL.cpp:1524] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank5]: Traceback (most recent call last):
+[rank5]:   File "/workspace/parameter-golf/train_gpt.py", line 1943, in <module>
+[rank5]:     main()
+[rank5]:   File "/workspace/parameter-golf/train_gpt.py", line 1738, in main
+[rank5]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank5]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "/workspace/parameter-golf/train_gpt.py", line 1316, in mixed_quantize_int6
+[rank5]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]:   File "/workspace/parameter-golf/train_gpt.py", line 1195, in quantize_int6_gptq
+[rank5]:     Hinv = torch.linalg.cholesky(H)
+[rank5]:            ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]: torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed because the input is not positive-definite (the leading minor of order 2 is not positive-definite).
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/workspace/parameter-golf/train_gpt.py", line 1943, in <module>
+[rank2]:     main()
+[rank2]:   File "/workspace/parameter-golf/train_gpt.py", line 1738, in main
+[rank2]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank2]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/workspace/parameter-golf/train_gpt.py", line 1316, in mixed_quantize_int6
+[rank2]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/workspace/parameter-golf/train_gpt.py", line 1195, in quantize_int6_gptq
+[rank2]:     Hinv = torch.linalg.cholesky(H)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]: torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed because the input is not positive-definite (the leading minor of order 2 is not positive-definite).
+W0401 18:11:58.003000 1282 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1350 closing signal SIGTERM
+W0401 18:11:58.006000 1282 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1351 closing signal SIGTERM
+W0401 18:11:58.007000 1282 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1352 closing signal SIGTERM
+W0401 18:11:58.008000 1282 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1353 closing signal SIGTERM
+W0401 18:11:58.010000 1282 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1354 closing signal SIGTERM
+W0401 18:11:58.011000 1282 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1355 closing signal SIGTERM
+W0401 18:11:58.012000 1282 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1356 closing signal SIGTERM
+E0401 18:11:59.721000 1282 torch/distributed/elastic/multiprocessing/api.py:882] failed (exitcode: 1) local_rank: 7 (pid: 1357) of binary: /usr/local/bin/python
+Traceback (most recent call last):
+  File "/usr/local/bin/torchrun", line 7, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/run.py", line 936, in main
+    run(args)
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/run.py", line 927, in run
+    elastic_launch(
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/launcher/api.py", line 156, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/launcher/api.py", line 293, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+train_gpt.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-04-01_18:11:58
+  host      : 11915e8a6775
+  rank      : 7 (local_rank: 7)
+  exitcode  : 1 (pid: 1357)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+
+Warning: Permanently added '[103.207.149.115]:18418' (ED25519) to the list of known hosts.

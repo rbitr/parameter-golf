@@ -58,7 +58,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [-] **Muon WD=0.025** — Abandoned: 0.03 already same BPB as 0.02, going lower won't help. Need higher WD for size.
 - [ ] **Different optimizers** — SOAP, Lion, Adalayer. Muon works well but alternatives exist.
 - [ ] **Muon NS per-component orthogonalization** — From Gram Newton-Schulz paper (dao-lab.ai): orthogonalize Q, K, V separately rather than as a concatenated matrix. Improved loss by ~0.2 ppl on Llama-430M. Check if our code concatenates any weights before NS — if so, splitting could help quality for free.
-- [ ] **Muon NS optimized polynomial coefficients ("Polar Express")** — From GNS paper: use per-iteration-tuned (a,b,c) coefficients instead of the same fixed triple each iteration. Could converge in fewer NS steps (currently 5), saving compute → more training steps.
+- [x] **Muon NS optimized polynomial coefficients ("Polar Express")** — TRIED: Per-iteration quintic coefficients (Amsel et al., ICLR 2026). Training works (6716 steps, slightly faster) but **GPTQ Cholesky fails** — PE normalization (*1.01) changes weight spectral properties, causing degenerate Hessians during AR calibration. Fixable with eigenvalue-clamped GPTQ, but not worth the complexity. **Dead end without GPTQ overhaul.**
 - [ ] **Curriculum learning** — Start with shorter sequences, ramp up to 2048. May help early training efficiency.
 - [ ] **Data ordering** — Smart curriculum over FineWeb shards. Some data is harder/more useful than others.
 - [x] **Label smoothing** — TRIED: epsilon=0.02. RESULT: **+0.0212 BPB worse** (1.1444 vs 1.1232). Devastating at this model size — model too small to waste capacity softening targets.
@@ -257,3 +257,4 @@ Pick from this list. Each must be a genuinely novel experiment, not an increment
 | 2026-04-01 | attn_gate_vrl | 1.1258 | 15.52MB | **REGRESSED**: Per-head sigmoid attention gate + value residual. +0.0090 BPB worse. Bad initialization (sigmoid(0)=0.5 halves attention). |
 | 2026-04-01 | attn_gate_vrl_v2 | 1.1266 | 15.52MB | **REGRESSED**: Proper init (gate=4.0, vrl=-4.0). +0.0098 BPB worse. Init didn't matter — technique hurts. 4.5% compute overhead. Dead end. |
 | 2026-04-01 | 12L_gqa4_mlp3x_prune | 1.1571 | 15.25MB | **CATASTROPHIC**: 12L/GQA-4/MLP-3x with magnitude pruning. Pre-prune 17.78MB, needed 27% pruning to fit. Base 1.1341 (undertrained, 6178 steps at 97ms). Quant gap 6x worse from pruning. **12L definitively dead at 16MB.** |
+| 2026-04-01 | polar_express_ns5 | CRASH | — | **CRASHED (2x)**: Polar Express per-iteration NS coefficients (ICLR 2026). Training works (6716 steps) but GPTQ Cholesky fails — PE normalization (*1.01) causes degenerate Hessians during AR calibration. |

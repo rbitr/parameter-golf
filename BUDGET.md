@@ -102,3 +102,6 @@
 | 2026-04-01 15:21 | attn_gate_vrl_v2 (FAILED) | 4.0 min | $1.45 | $616.33 |
 | 2026-04-01 15:54 | attn_gate_vrl_v2 | 30.2 min | $10.81 | $627.14 |
 | 2026-04-01 16:54 | 12L_gqa4_mlp3x_prune | 29.3 min | $10.50 | $637.64 |
+| 2026-04-01 17:47 | polar_express_ns5 (FAILED) | 4.0 min | $1.45 | $639.09 |
+| 2026-04-01 18:12 | polar_express_ns5 (FAILED) | 22.2 min | $7.96 | $647.05 |
+| 2026-04-01 18:46 | polar_express_ns5 (FAILED) | 21.3 min | $7.63 | $654.68 |

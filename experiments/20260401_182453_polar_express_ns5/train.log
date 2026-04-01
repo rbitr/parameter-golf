@@ -1,0 +1,194 @@
+W0401 18:29:41.112000 1248 torch/distributed/run.py:803] 
+W0401 18:29:41.112000 1248 torch/distributed/run.py:803] *****************************************
+W0401 18:29:41.112000 1248 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0401 18:29:41.112000 1248 torch/distributed/run.py:803] *****************************************
+logs/eval_20260401_182453.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:26993756
+mtp_num_heads:0 mtp_loss_weight:0.2 mtp_params:0
+XSA:last_11 active_layers:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+world_size:8 grad_accum_steps:1
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.035 head_lr:0.0 matrix_lr:0.025 scalar_lr:0.025
+train_batch_tokens:786432 train_seq_len:2048 iterations:20000 warmup_steps:20 max_wallclock_seconds:600.000
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+step:0/20000 val_loss:6.9279 val_bpb:4.1031 train_time:0ms step_avg:0.02ms
+step:1/20000 train_loss:6.9299 train_time:154ms step_avg:153.77ms
+step:2/20000 train_loss:8.5281 train_time:237ms step_avg:118.41ms
+step:3/20000 train_loss:7.6558 train_time:324ms step_avg:108.09ms
+step:4/20000 train_loss:7.3874 train_time:412ms step_avg:102.94ms
+step:5/20000 train_loss:7.2430 train_time:500ms step_avg:99.96ms
+step:6/20000 train_loss:6.9385 train_time:588ms step_avg:98.05ms
+step:7/20000 train_loss:6.7575 train_time:675ms step_avg:96.50ms
+step:8/20000 train_loss:6.6276 train_time:763ms step_avg:95.43ms
+step:9/20000 train_loss:6.3411 train_time:851ms step_avg:94.54ms
+step:10/20000 train_loss:5.9988 train_time:939ms step_avg:93.90ms
+step:500/20000 train_loss:2.3902 train_time:44809ms step_avg:89.62ms
+step:1000/20000 train_loss:2.2553 train_time:90916ms step_avg:90.92ms
+step:1500/20000 train_loss:2.2166 train_time:137399ms step_avg:91.60ms
+step:2000/20000 train_loss:2.0690 train_time:183823ms step_avg:91.91ms
+step:2500/20000 train_loss:2.1655 train_time:230158ms step_avg:92.06ms
+step:3000/20000 train_loss:2.1531 train_time:276537ms step_avg:92.18ms
+step:3500/20000 train_loss:2.1625 train_time:322931ms step_avg:92.27ms
+step:4000/20000 train_loss:1.9660 train_time:369191ms step_avg:92.30ms
+step:4000/20000 val_loss:2.0556 val_bpb:1.2175 train_time:369196ms step_avg:92.30ms
+step:4500/20000 train_loss:2.1088 train_time:415553ms step_avg:92.35ms
+step:5000/20000 train_loss:2.0894 train_time:461877ms step_avg:92.38ms
+step:5500/20000 train_loss:2.0041 train_time:508233ms step_avg:92.41ms
+late_qat:enabled step:5971 scale:0.1498
+step:6000/20000 train_loss:1.9257 train_time:554502ms step_avg:92.42ms
+step:6492/20000 val_loss:1.9445 val_bpb:1.1517 train_time:600064ms step_avg:92.43ms
+stopping_early: wallclock_cap train_time:600064ms step:6492/20000
+peak memory allocated: 22050 MiB reserved: 22100 MiB
+ema:applying EMA weights
+DIAGNOSTIC post_ema val_loss:1.9450 val_bpb:1.1519 eval_time:2090ms
+Serialized model: 106178569 bytes
+Code size: 94081 bytes
+gptq:generating autoregressive calibration data (64 seqs x 2048 tokens, temp=0.8)...
+gptq:generated 64 sequences in 201.0s
+gptq:collecting hessians from autoregressive data...
+gptq:collected hessians for 68 layers in 4.4s
+[rank4]: Traceback (most recent call last):
+[rank4]:   File "/workspace/parameter-golf/train_gpt.py", line 1948, in <module>
+[rank4]:     main()
+[rank4]:   File "/workspace/parameter-golf/train_gpt.py", line 1743, in main
+[rank4]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank4]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "/workspace/parameter-golf/train_gpt.py", line 1321, in mixed_quantize_int6
+[rank4]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank4]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]:   File "/workspace/parameter-golf/train_gpt.py", line 1235, in quantize_int6_gptq
+[rank4]:     best_q = best_q[:, inv_perm]
+[rank4]:              ~~~~~~^^^^^^^^^^^^^
+[rank4]: TypeError: 'NoneType' object is not subscriptable
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/workspace/parameter-golf/train_gpt.py", line 1948, in <module>
+[rank0]:     main()
+[rank0]:   File "/workspace/parameter-golf/train_gpt.py", line 1743, in main
+[rank0]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank0]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/workspace/parameter-golf/train_gpt.py", line 1321, in mixed_quantize_int6
+[rank0]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/workspace/parameter-golf/train_gpt.py", line 1235, in quantize_int6_gptq
+[rank0]:     best_q = best_q[:, inv_perm]
+[rank0]:              ~~~~~~^^^^^^^^^^^^^
+[rank0]: TypeError: 'NoneType' object is not subscriptable
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/workspace/parameter-golf/train_gpt.py", line 1948, in <module>
+[rank1]:     main()
+[rank1]:   File "/workspace/parameter-golf/train_gpt.py", line 1743, in main
+[rank1]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank1]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/workspace/parameter-golf/train_gpt.py", line 1321, in mixed_quantize_int6
+[rank1]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/workspace/parameter-golf/train_gpt.py", line 1235, in quantize_int6_gptq
+[rank1]:     best_q = best_q[:, inv_perm]
+[rank1]:              ~~~~~~^^^^^^^^^^^^^
+[rank1]: TypeError: 'NoneType' object is not subscriptable
+[rank7]: Traceback (most recent call last):
+[rank7]:   File "/workspace/parameter-golf/train_gpt.py", line 1948, in <module>
+[rank7]:     main()
+[rank7]:   File "/workspace/parameter-golf/train_gpt.py", line 1743, in main
+[rank7]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank7]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/workspace/parameter-golf/train_gpt.py", line 1321, in mixed_quantize_int6
+[rank7]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank7]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/workspace/parameter-golf/train_gpt.py", line 1235, in quantize_int6_gptq
+[rank7]:     best_q = best_q[:, inv_perm]
+[rank7]:              ~~~~~~^^^^^^^^^^^^^
+[rank7]: TypeError: 'NoneType' object is not subscriptable
+[rank6]: Traceback (most recent call last):
+[rank6]:   File "/workspace/parameter-golf/train_gpt.py", line 1948, in <module>
+[rank6]:     main()
+[rank6]:   File "/workspace/parameter-golf/train_gpt.py", line 1743, in main
+[rank6]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank6]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "/workspace/parameter-golf/train_gpt.py", line 1321, in mixed_quantize_int6
+[rank6]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank6]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]:   File "/workspace/parameter-golf/train_gpt.py", line 1235, in quantize_int6_gptq
+[rank6]:     best_q = best_q[:, inv_perm]
+[rank6]:              ~~~~~~^^^^^^^^^^^^^
+[rank6]: TypeError: 'NoneType' object is not subscriptable
+[rank0]:[W401 18:46:03.789966619 ProcessGroupNCCL.cpp:1524] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/workspace/parameter-golf/train_gpt.py", line 1948, in <module>
+[rank3]:     main()
+[rank3]:   File "/workspace/parameter-golf/train_gpt.py", line 1743, in main
+[rank3]:     quant_result, quant_meta = mixed_quantize_int6(sd_cpu, {"mlp", "attn"}, hessians=hessians)
+[rank3]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/workspace/parameter-golf/train_gpt.py", line 1321, in mixed_quantize_int6
+[rank3]:     q, s = quantize_int6_gptq(t, hessians[h_key])
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/workspace/parameter-golf/train_gpt.py", line 1235, in quantize_int6_gptq
+[rank3]:     best_q = best_q[:, inv_perm]
+[rank3]:              ~~~~~~^^^^^^^^^^^^^
+[rank3]: TypeError: 'NoneType' object is not subscriptable
+W0401 18:46:04.179000 1248 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1316 closing signal SIGTERM
+W0401 18:46:04.181000 1248 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1317 closing signal SIGTERM
+W0401 18:46:04.182000 1248 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1318 closing signal SIGTERM
+W0401 18:46:04.184000 1248 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1319 closing signal SIGTERM
+W0401 18:46:04.185000 1248 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1321 closing signal SIGTERM
+W0401 18:46:04.187000 1248 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1322 closing signal SIGTERM
+W0401 18:46:04.188000 1248 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 1323 closing signal SIGTERM
+E0401 18:46:05.795000 1248 torch/distributed/elastic/multiprocessing/api.py:882] failed (exitcode: 1) local_rank: 4 (pid: 1320) of binary: /usr/local/bin/python
+Traceback (most recent call last):
+  File "/usr/local/bin/torchrun", line 7, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/run.py", line 936, in main
+    run(args)
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/run.py", line 927, in run
+    elastic_launch(
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/launcher/api.py", line 156, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/launcher/api.py", line 293, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+train_gpt.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-04-01_18:46:04
+  host      : 5e3c5ef2a544
+  rank      : 4 (local_rank: 4)
+  exitcode  : 1 (pid: 1320)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+
+Warning: Permanently added '[103.207.149.115]:13329' (ED25519) to the list of known hosts.

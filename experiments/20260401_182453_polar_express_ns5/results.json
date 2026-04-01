@@ -1,0 +1,14 @@
+{
+  "val_loss": null,
+  "val_bpb": null,
+  "artifact_size_bytes": null,
+  "train_time_ms": 600064,
+  "steps": 6492,
+  "exit_code": 1,
+  "seed": 1337,
+  "description": "polar_express_ns5",
+  "experiment": "20260401_182453_polar_express_ns5",
+  "pod_id": "psulzf7pfctow0",
+  "elapsed_min": 21.3,
+  "estimated_cost": 7.63
+}
