@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.90182435,
+  "val_bpb": 1.12637049,
+  "artifact_size_bytes": 15844420,
+  "train_time_ms": 600012,
+  "steps": 6173,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "12L_kvshare_dedup",
+  "experiment": "20260401_130439_12L_kvshare_dedup",
+  "pod_id": "03xipfialt1rem",
+  "elapsed_min": 27.5,
+  "estimated_cost": 9.88
+}

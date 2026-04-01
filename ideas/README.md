@@ -17,10 +17,10 @@ Evolving list of ideas to explore. Mark with status as you go:
 ### Bold bets (ALL remaining runs after infrastructure upgrade)
 - [-] **Mixture of Experts (MoE)** — EVALUATED LOCALLY: Dense MoE (iso-param, 2 experts) adds ~7% overhead from loop over experts without reducing total compute. Sparse routing breaks torch.compile fullgraph. Net: more steps lost to overhead than gained from specialization. **Not viable without custom sparse kernels.**
 - [ ] **Larger vocabulary (2048-8192 tokens)** — Fewer tokens per sequence = better BPB. Need factored embeddings. Ternary entry used 8192 BPE + 254d factored embeddings successfully. **BPB is the metric — this could be a fundamental unlock.** BLOCKER: Only 1024-BPE tokenized data available; re-tokenization requires original text.
-- [x] **Wider vs deeper tradeoffs** — FULLY EXPLORED: 10L/512d+WD=0.03: +0.0073 worse. 12L/GQA-2/MLP-3x: -0.0004 better BUT 17.7MB (OVER). 12L/GQA-4/MLP-2.5x: +0.0046 worse (narrow MLP devastating). 14L/448d: 23% slower locally. **11L/512d/GQA-4/MLP-3x is the optimal architecture for 16MB. Cannot fit 12L without crippling width. Architecture exploration COMPLETE.**
+- [x] **Wider vs deeper tradeoffs** — FULLY EXPLORED: 10L/512d+WD=0.03: +0.0073 worse. 12L/GQA-2/MLP-3x: -0.0004 better BUT 17.7MB (OVER). 12L/GQA-4/MLP-2.5x: +0.0046 worse (narrow MLP devastating). 12L/GQA-4/MLP-3x+KV-sharing: +0.0096 worse (shared K/V devastates attention diversity). 14L/448d: 23% slower locally. **11L/512d/GQA-4/MLP-3x is the optimal architecture for 16MB. Cannot fit 12L without crippling width or sharing. Architecture exploration COMPLETE.**
 - [ ] **State-space model hybrid (Mamba/S4)** — Replace some or all attention layers with SSM blocks. Could be fundamentally more parameter-efficient.
 - [ ] **RWKV-style linear attention** — Replace softmax attention with linear recurrence. Cheaper per layer → more layers.
-- [ ] **Cross-layer KV sharing** — Reuse KV from early layers in later layers. More info flow without more params.
+- [x] **Cross-layer KV sharing** — TRIED: 12L with KV sharing (stride=2, pairs share K/V). **+0.0096 BPB worse** (1.1264 vs 1.1168). Shared K/V limits attention diversity. Needed 13.8% pruning despite state_dict dedup. **Dead end — consistent with depth recurrence: unique params > depth at this model size.**
 - [x] **Untied embeddings (separate lm_head)** — TRIED: +0.0208 BPB (catastrophic). 524K extra params severely undertrained. Tied embedding provides beneficial inductive bias + richer gradient. **Dead end.**
 - [ ] **Factored embeddings** — Low-rank embedding matrix to save parameters, especially if increasing vocab size.
 - [ ] **Mixture of depths** — Skip some layers for some tokens via a learned router.
@@ -118,7 +118,7 @@ Pick from this list. Each must be a genuinely novel experiment, not an increment
 3. **Wider model (8L/640d or 7L/768d)** — Radically different width/depth tradeoff.
 4. **SSM/Mamba hybrid or RWKV-style** — Fundamentally different from attention. Could be more parameter-efficient.
 5. **Knowledge distillation** — Train unconstrained teacher, distill into 16MB student.
-6. **Cross-layer KV sharing** — More info flow without more params.
+6. ~~Cross-layer KV sharing~~ — DEAD: +0.0096 BPB worse. Shared K/V limits attention diversity.
 7. **Structured sparsity (2:4) + lower WD** — Could unlock WD=0.03 (best BPB ever, but 517KB over).
 
 ### DO NOT spend runs on
@@ -134,6 +134,7 @@ Pick from this list. Each must be a genuinely novel experiment, not an increment
 - ~~grad_clip tuning~~ — 0.3 is optimal
 - ~~matrix_lr tuning~~ — 0.025 is optimal
 - ~~Compression alternatives~~ — brotli-10 is optimal, all others worse
+- ~~Cross-layer KV sharing~~ — +0.0096 BPB worse. Shared K/V limits attention diversity.
 - ~~Muon WD tuning~~ — Best BPB at WD≤0.03 but can't fit under 16MB
 
 ### Muon weight decay — MAJOR DISCOVERY (UPDATED)
@@ -250,3 +251,5 @@ Pick from this list. Each must be a genuinely novel experiment, not an increment
 | 2026-03-31 | rope_dims32 | CRASH | 16.41MB (OVER) | **CRASHED**: rope_dims=32 makes artifact 900KB larger (worse compression). torch.quantile bug in pruning code. |
 | 2026-03-31 | rope_dims32_v2 | CRASH | 16.40MB (OVER) | **CRASHED**: Same bug (.cpu() not sufficient). Fixed with np.percentile(). Need retry. |
 | 2026-03-31 | untied_embeddings_headlr04 | 1.1376 | 15.91MB | **REGRESSED**: Untied embeddings +0.0208 BPB (catastrophic). 524K extra params undertrained. Tied embedding beneficial inductive bias. Dead end. |
+| 2026-04-01 | 12L_kvshare_stride2 | TIMEOUT | 17.68MB (OVER) | **TIMED OUT**: 12L KV sharing without state_dict dedup. Shared weights stored twice → 17.7MB over. SSH 1800s timeout. |
+| 2026-04-01 | 12L_kvshare_dedup | 1.1264 | 15.84MB | **REGRESSED**: 12L KV sharing (pairs share K/V). +0.0096 BPB worse. 6173 steps (97ms/step). Shared K/V limits attention diversity. 13.8% pruning needed to fit. Dead end. |

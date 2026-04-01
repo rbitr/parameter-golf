@@ -52,7 +52,7 @@ class Hyperparameters:
     max_wallclock_seconds = float(os.environ.get("MAX_WALLCLOCK_SECONDS", 600.0))
     qk_gain_init = float(os.environ.get("QK_GAIN_INIT", 1.5))
     vocab_size = int(os.environ.get("VOCAB_SIZE", 1024))
-    num_layers = int(os.environ.get("NUM_LAYERS", 11))
+    num_layers = int(os.environ.get("NUM_LAYERS", 12))
     num_kv_heads = int(os.environ.get("NUM_KV_HEADS", 4))
     model_dim = int(os.environ.get("MODEL_DIM", 512))
     num_heads = int(os.environ.get("NUM_HEADS", 8))
@@ -85,14 +85,14 @@ class Hyperparameters:
     qat_enabled = bool(int(os.environ.get("QAT_ENABLED", "0")))
     bigram_vocab_size = int(os.environ.get("BIGRAM_VOCAB_SIZE", 2048))
     bigram_dim = int(os.environ.get("BIGRAM_DIM", 128))
-    xsa_last_n = int(os.environ.get("XSA_LAST_N", 11))
+    xsa_last_n = int(os.environ.get("XSA_LAST_N", 12))
     rope_dims = int(os.environ.get("ROPE_DIMS", 16))
     ln_scale = bool(int(os.environ.get("LN_SCALE", "1")))
     dtg_enabled = bool(int(os.environ.get("DTG_ENABLED", "0")))
     late_qat_threshold = float(os.environ.get("LATE_QAT_THRESHOLD", 0.15))
     ve_enabled = bool(int(os.environ.get("VE_ENABLED", "1")))
     ve_dim = int(os.environ.get("VE_DIM", 128))
-    ve_layers = os.environ.get("VE_LAYERS", "9,10")
+    ve_layers = os.environ.get("VE_LAYERS", "10,11")
     ttt_enabled = bool(int(os.environ.get("TTT_ENABLED", "0")))
     ttt_lr = float(os.environ.get("TTT_LR", 0.0005))
     ttt_epochs = int(os.environ.get("TTT_EPOCHS", 1))
@@ -104,7 +104,7 @@ class Hyperparameters:
     ttt_anchor_alpha = float(os.environ.get("TTT_ANCHOR_ALPHA", 0.0))
     ttt_optimizer = os.environ.get("TTT_OPTIMIZER", "sgd")  # "sgd" or "adam"
     mlp_type = os.environ.get("MLP_TYPE", "leaky_relu_sq")  # "leaky_relu_sq" or "swiglu"
-    kv_share_stride = int(os.environ.get("KV_SHARE_STRIDE", 0))  # 0=disabled, 2=share KV between pairs
+    kv_share_stride = int(os.environ.get("KV_SHARE_STRIDE", 2))  # 0=disabled, 2=share KV between pairs
 def zeropower_via_newtonschulz5(G: Tensor, steps: int = 10, eps: float = 1e-7) -> Tensor:
     a, b, c = (3.4445, -4.7750, 2.0315)
     X = G.bfloat16()

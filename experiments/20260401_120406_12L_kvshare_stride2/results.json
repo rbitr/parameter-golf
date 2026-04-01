@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.88782888,
+  "val_bpb": 1.11808156,
+  "artifact_size_bytes": 17676571,
+  "train_time_ms": 600063,
+  "steps": 6145,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "12L_kvshare_stride2",
+  "experiment": "20260401_120406_12L_kvshare_stride2",
+  "pod_id": "qdkg0nutjfw3io",
+  "elapsed_min": 29.4,
+  "estimated_cost": 10.54
+}

@@ -42,7 +42,7 @@ COST_PER_HOUR = 21.52
 
 # Timeouts
 POD_READY_TIMEOUT = 900  # 15 min to become ready (8xH100 can be slow)
-TRAINING_TIMEOUT = 1800  # 30 min max for training (10 min) + eval (~5 min) + TTT (~7 min) + buffer
+TRAINING_TIMEOUT = 2100  # 35 min max for training (10 min) + eval (~5 min) + GPTQ (~5 min) + TTT (~7 min) + buffer
 SETUP_TIMEOUT = 300      # 5 min for setup commands
 
 # Retry config
