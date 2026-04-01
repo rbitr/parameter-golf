@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.95375672,
+  "val_bpb": 1.15712784,
+  "artifact_size_bytes": 15251813,
+  "train_time_ms": 600081,
+  "steps": 6178,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "12L_gqa4_mlp3x_prune",
+  "experiment": "20260401_162450_12L_gqa4_mlp3x_prune",
+  "pod_id": "43ox1j9k01jrru",
+  "elapsed_min": 29.3,
+  "estimated_cost": 10.5
+}
