@@ -1,0 +1,14 @@
+{
+  "val_loss": 1.90088388,
+  "val_bpb": 1.12581348,
+  "artifact_size_bytes": 15523700,
+  "train_time_ms": 600011,
+  "steps": 6518,
+  "exit_code": 0,
+  "seed": 1337,
+  "description": "attn_gate_vrl",
+  "experiment": "20260401_141447_attn_gate_vrl",
+  "pod_id": "l7vf7uze9v7tsp",
+  "elapsed_min": 29.2,
+  "estimated_cost": 10.47
+}
