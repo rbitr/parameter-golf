@@ -26,7 +26,7 @@ Evolving list of ideas to explore. Mark with status as you go:
 - [ ] **Mixture of depths** — Skip some layers for some tokens via a learned router.
 - [ ] **Knowledge distillation** — Train a larger teacher model (unconstrained), distill into the 16MB student.
 - [ ] **Structured sparsity (2:4)** — Hardware-friendly sparsity. Could free space for lower weight decay (WD=0.03 gave best BPB but was 517KB over).
-- [~] **Gated attention + Value Residual (VRL)** — TRIED with bad init (sigmoid(0)=0.5): +0.0090 worse. **RETRY with proper init** (attn_gate=4.0→sigmoid≈1, vr_lambda=-4.0→sigmoid≈0) so model starts from baseline behavior. SOTA uses both techniques.
+- [x] **Gated attention + Value Residual (VRL)** — TRIED TWICE. Bad init (sigmoid(0)=0.5): +0.0090 worse. Proper init (gate=4.0, vrl=-4.0): +0.0098 worse. Init doesn't matter — technique itself hurts. 4.5% compute overhead costs 300 steps. XSA already modulates attention. **Dead end.**
 
 ### DO NOT chase these SOTA-specific choices (architecture trap)
 - BigramHash 3072×112 — we tried 3072, it was a wash for us. Don't re-try.
@@ -254,4 +254,5 @@ Pick from this list. Each must be a genuinely novel experiment, not an increment
 | 2026-03-31 | untied_embeddings_headlr04 | 1.1376 | 15.91MB | **REGRESSED**: Untied embeddings +0.0208 BPB (catastrophic). 524K extra params undertrained. Tied embedding beneficial inductive bias. Dead end. |
 | 2026-04-01 | 12L_kvshare_stride2 | TIMEOUT | 17.68MB (OVER) | **TIMED OUT**: 12L KV sharing without state_dict dedup. Shared weights stored twice → 17.7MB over. SSH 1800s timeout. |
 | 2026-04-01 | 12L_kvshare_dedup | 1.1264 | 15.84MB | **REGRESSED**: 12L KV sharing (pairs share K/V). +0.0096 BPB worse. 6173 steps (97ms/step). Shared K/V limits attention diversity. 13.8% pruning needed to fit. Dead end. |
-| 2026-04-01 | attn_gate_vrl | 1.1258 | 15.52MB | **REGRESSED**: Per-head sigmoid attention gate + value residual. +0.0090 BPB worse. Bad initialization (sigmoid(0)=0.5 halves attention). Retry with proper init (gate=4.0, vrl=-4.0). |
+| 2026-04-01 | attn_gate_vrl | 1.1258 | 15.52MB | **REGRESSED**: Per-head sigmoid attention gate + value residual. +0.0090 BPB worse. Bad initialization (sigmoid(0)=0.5 halves attention). |
+| 2026-04-01 | attn_gate_vrl_v2 | 1.1266 | 15.52MB | **REGRESSED**: Proper init (gate=4.0, vrl=-4.0). +0.0098 BPB worse. Init didn't matter — technique hurts. 4.5% compute overhead. Dead end. |
